@@ -1,0 +1,21 @@
+{
+  "name": "crawler-project",
+  "version": "1.0.0",
+  "description": "Lambda functions required by application for crawling sources of financial news.",
+  "exports": {
+    "./ft": "./lambdas/ft/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alistairdivorty/financial-news-crawler.git"
+  },
+  "author": "alistairdivorty",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alistairdivorty/financial-news-crawler/issues"
+  },
+  "homepage": "https://github.com/alistairdivorty/financial-news-crawler#readme"
+}
