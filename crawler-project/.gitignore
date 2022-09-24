@@ -1,4 +1,2 @@
 **/__pycache__/
 **/.DS_STORE
-node_modules/
-lambdas/**/*.js
