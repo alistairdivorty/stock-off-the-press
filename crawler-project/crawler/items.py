@@ -6,7 +6,9 @@
 import scrapy
 
 
-class CrawlerItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+class ArticleItem(scrapy.Item):
+    headline = scrapy.Field()
+    description = scrapy.Field()
+    topic = scrapy.Field()
+    text = scrapy.Field()
+    date_published = scrapy.Field()
