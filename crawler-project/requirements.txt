@@ -1,0 +1,4 @@
+cryptography
+python-dateutil
+python-dotenv
+Scrapy

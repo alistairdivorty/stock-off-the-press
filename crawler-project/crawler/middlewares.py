@@ -4,6 +4,8 @@
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from twisted.internet import reactor
+import twisted.internet.task
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
@@ -53,7 +55,7 @@ class CrawlerSpiderMiddleware:
             yield r
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info("Spider opened: %s" % spider.name)
 
 
 class CrawlerDownloaderMiddleware:
@@ -78,7 +80,12 @@ class CrawlerDownloaderMiddleware:
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-        return None
+
+        delay = request.meta.get("delay", None)
+        if not delay:
+            return None
+        spider.logger.info("Request deferred: %s" % request.url)
+        return twisted.internet.task.deferLater(reactor, delay, lambda: None)
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
@@ -100,4 +107,4 @@ class CrawlerDownloaderMiddleware:
         pass
 
     def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+        spider.logger.info("Spider opened: %s" % spider.name)

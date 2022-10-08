@@ -4,7 +4,6 @@ const tmpDir = '/tmp';
 const userDataDir = tmpDir + '/chrome-user-data';
 
 interface Event {
-    url: string;
     email: string;
     password: string;
 }
@@ -34,7 +33,7 @@ exports.handler = async (event: Event) => {
     let cookies: object;
 
     try {
-        await page.goto(event.url);
+        await page.goto('https://accounts.ft.com/login');
 
         await page.locator('#enter-email').fill(event.email);
         await page.locator('#enter-email-next').click();
@@ -45,10 +44,12 @@ exports.handler = async (event: Event) => {
             page.locator('#sign-in-button').click()
         ]);
 
+        await page.waitForURL('https://www.ft.com/', { timeout: 3000 });
+
         cookies = await page.context().cookies();
     } catch (error) {
         console.log(error);
-        throw error;
+        throw Error('CAPTCHA encountered.');
     } finally {
         await page.close();
     }
