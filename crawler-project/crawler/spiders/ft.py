@@ -26,6 +26,7 @@ class FtSpider(SitemapSpider):
             errback=self.errback,
             method="POST",
             data=json.loads(f.decrypt(form_payload.encode("utf-8"))),
+            dont_filter=True,
             meta={"dont_retry": True},
         )
 
@@ -111,11 +112,24 @@ class FtSpider(SitemapSpider):
         if "description" not in linked_data_news_article:
             return
 
+        is_newsletter = any(
+            linked_data_news_article["articleBody"].startswith(head)
+            for head in ["Good morning", "This article is an on-site version"]
+        )
+
+        if is_newsletter:
+            return
+
         json_ld_breadcrumb_list = response.xpath(
             '//script[@type="application/ld+json"][2]//text()'
         ).get()
 
         linked_data_breadcrumb_list = json.loads(json_ld_breadcrumb_list)
+
+        if len(linked_data_breadcrumb_list["itemListElement"]) < 3:
+            return
+        if linked_data_breadcrumb_list["itemListElement"][1]["name"] != "Companies":
+            return
 
         yield ArticleItem(
             headline=linked_data_news_article["headline"],
@@ -125,6 +139,7 @@ class FtSpider(SitemapSpider):
             date_published=dateutil.parser.parse(
                 linked_data_news_article["datePublished"]
             ),
+            source="FT",
         )
 
 

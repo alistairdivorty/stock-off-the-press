@@ -1,4 +1,6 @@
 cryptography
+dnspython
+pymongo
 python-dateutil
 python-dotenv
 Scrapy
