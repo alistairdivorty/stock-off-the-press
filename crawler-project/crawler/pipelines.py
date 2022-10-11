@@ -1,13 +1,15 @@
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
+import os
+from pymongo import MongoClient
+from pymongo.database import Database
 
-
-# useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
+db: Database = MongoClient(os.environ["MONGODB_CONNECTION_URI"]).get_default_database()
 
 
 class CrawlerPipeline:
     def process_item(self, item, spider):
+        db.articles.update_one(
+            {"headline": item["headline"]},
+            {"$set": item},
+            upsert=True,
+        )
         return item

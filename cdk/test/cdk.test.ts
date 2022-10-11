@@ -1,10 +1,15 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
-import * as Cdk from '../lib/cdk-stack';
+import * as Cdk from '../lib/crawler-stack';
 
 describe('Stack Created', () => {
     const app = new cdk.App();
-    const stack = new Cdk.CrawlerStack(app, 'TestStack');
+    const stack = new Cdk.CrawlerStack(app, 'TestStack', {
+        env: {
+            account: process.env.AWS_ACCOUNT_ID,
+            region: 'eu-west-1'
+        }
+    });
     const template = Template.fromStack(stack);
 
     test('Lambda Function Created', () => {

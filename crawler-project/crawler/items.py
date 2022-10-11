@@ -12,3 +12,4 @@ class ArticleItem(scrapy.Item):
     topic = scrapy.Field()
     text = scrapy.Field()
     date_published = scrapy.Field()
+    source = scrapy.Field()
