@@ -10,7 +10,12 @@ dotenv.config();
 
 const app = new cdk.App();
 new VPCStack(app, 'VPCStack');
-new CrawlerStack(app, 'CrawlerStack');
+new CrawlerStack(app, 'CrawlerStack', {
+    env: {
+        account: process.env.AWS_ACCOUNT_ID,
+        region: 'eu-west-1'
+    }
+});
 new DocDBStack(app, 'DocDBStack', {
     env: {
         account: process.env.AWS_ACCOUNT_ID,

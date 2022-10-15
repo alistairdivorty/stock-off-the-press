@@ -17,6 +17,11 @@ class FtSpider(SitemapSpider):
     name = "ft"
     allowed_domains = ["ft.com"]
     sitemap_urls = ["https://www.ft.com/sitemaps/index.xml"]
+    year: int | None
+
+    def __init__(self, year: int | None = None, *args, **kwargs):
+        super(FtSpider, self).__init__(*args, **kwargs)
+        self.year = year
 
     def start_requests(self):
         """Perform login by invoking Lambda function via API."""
@@ -54,7 +59,7 @@ class FtSpider(SitemapSpider):
             if entry["loc"].endswith("news.xml"):
                 continue
             date_time = dateutil.parser.parse(entry["lastmod"])
-            if date_time.year < 2012:
+            if date_time.year != self.year:
                 continue
             yield entry
 

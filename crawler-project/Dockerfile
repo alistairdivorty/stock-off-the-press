@@ -2,10 +2,6 @@ FROM continuumio/miniconda3
 
 WORKDIR /usr/src/app
 
-COPY scrapy.cfg .
-COPY requirements.txt .
-COPY crawler crawler
-
 # install build dependencies
 RUN apt-get update && \
     apt-get install -y \
@@ -22,10 +18,17 @@ RUN conda create -n crawler python=3.10
 RUN echo "conda activate crawler" >> ~/.bashrc
 SHELL ["/bin/bash", "--login", "-c"]
 
+# install Python dependencies
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY entrypoint.sh .
+# download CA certificate for TLS connection to DB
+RUN wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem
 
+COPY scrapy.cfg .
+COPY crawler crawler
+
+COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 ENTRYPOINT ["./entrypoint.sh"]
