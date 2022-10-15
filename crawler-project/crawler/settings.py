@@ -86,3 +86,7 @@ ITEM_PIPELINES = {
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+# Configure logging
+LOG_FORMATTER = "crawler.log_formatter.QuietLogFormatter"
+LOG_SCRAPED_ITEMS = False

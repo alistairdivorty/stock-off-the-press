@@ -1,6 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import { Template } from 'aws-cdk-lib/assertions';
 import * as Cdk from '../lib/crawler-stack';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 describe('Stack Created', () => {
     const app = new cdk.App();
@@ -21,10 +24,6 @@ describe('Stack Created', () => {
     });
 
     test('API Created', () => {
-        const app = new cdk.App();
-        const stack = new Cdk.CrawlerStack(app, 'TestStack');
-        const template = Template.fromStack(stack);
-
         template.hasResourceProperties('AWS::ApiGateway::Resource', {
             PathPart: 'ft'
         });
@@ -47,6 +46,19 @@ describe('Stack Created', () => {
                     }
                 ]
             }
+        });
+    });
+
+    test('Fargate Task Definition Created', () => {
+        template.hasResourceProperties('AWS::ECS::TaskDefinition', {
+            ContainerDefinitions: [
+                {
+                    Essential: true,
+                    Name: 'container-ft'
+                }
+            ],
+            Cpu: '512',
+            Memory: '1024'
         });
     });
 });
