@@ -8,27 +8,27 @@ interface Event {
     password: string;
 }
 
-let browser: BrowserContext;
-
-const browserPromise = chromium.launchPersistentContext(userDataDir, {
-    headless: isLambdaRuntimeEnv,
-    args: [
-        '--single-process',
-        '--no-zygote',
-        '--no-sandbox',
-        '--disable-dev-shm-usage'
-    ],
-    ignoreDefaultArgs: ['--enable-automation'],
-    userAgent:
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'
-});
-
 /**
  * Lambda function handler
  * @param {Event} event - data from invoker
  */
 exports.handler = async (event: Event) => {
-    browser = await browserPromise;
+    const browser: BrowserContext = await chromium.launchPersistentContext(
+        userDataDir,
+        {
+            headless: isLambdaRuntimeEnv,
+            args: [
+                '--single-process',
+                '--no-zygote',
+                '--no-sandbox',
+                '--disable-dev-shm-usage'
+            ],
+            userAgent:
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36',
+            ignoreDefaultArgs: ['--enable-automation']
+        }
+    );
+
     const page: Page = await browser.newPage();
     let cookies: object;
 
@@ -52,6 +52,7 @@ exports.handler = async (event: Event) => {
         throw Error('CAPTCHA encountered.');
     } finally {
         await page.close();
+        await browser.close();
     }
 
     return cookies;
