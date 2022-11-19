@@ -38,7 +38,7 @@ Install the Python dependencies by running `pip install -r requirements.txt` fro
 Set the necessary environment variables by modifying the command below as required depending on the location of your Miniconda installation and environment name.
 
 <pre><code>conda env config vars set \
-PYTHONPATH=<i>path/to/project/dir/crawler-project/crawler</i>:$HOME/miniconda3/envs/<i>env-name</i>/lib/python3.10/site-packages</code></pre>
+PYTHONPATH=<i>path/to/project/dir/crawler-project</i>:$HOME/miniconda3/envs/<i>env-name</i>/lib/python3.10/site-packages</code></pre>
 
 Reactivate the environment by running <code>conda activate _env-name_</code>.
 
@@ -46,10 +46,52 @@ To create a file for storing environment variables, run `cp .env.example .env` f
 
 ### 1.3. Directory Structure
 
+```
+📦crawler-project
+ ┣ 📂crawler
+ ┃ ┣ 📂scripts
+ ┃ ┃ ┣ 📜crawl.py
+ ┃ ┃ ┗ 📜encrypt_data.py
+ ┃ ┣ 📂spiders
+ ┃ ┃ ┗ 📜ft.py
+ ┃ ┣ 📜form_payloads.py
+ ┃ ┣ 📜items.py
+ ┃ ┣ 📜log_formatter.py
+ ┃ ┣ 📜middlewares.py
+ ┃ ┣ 📜pipelines.py
+ ┃ ┗ 📜settings.py
+ ┣ 📂lambdas
+ ┃ ┣ 📂ft
+ ┃ ┃ ┣ 📜Dockerfile
+ ┃ ┃ ┣ 📜entrypoint.sh
+ ┃ ┃ ┣ 📜index.ts
+ ┃ ┃ ┗ 📂node_modules
+ ┃ ┣ 📜.eslintrc.json
+ ┃ ┣ 📜.gitignore
+ ┃ ┣ 📜.prettierrc
+ ┃ ┣ 📜package-lock.json
+ ┃ ┣ 📜package.json
+ ┃ ┗ 📜tsconfig.json
+ ┣ 📜.env
+ ┣ 📜.env.example
+ ┣ 📜.gitignore
+ ┣ 📜Dockerfile
+ ┣ 📜entrypoint.sh
+ ┣ 📜production.env
+ ┣ 📜requirements.txt
+ ┗ 📜scrapy.cfg
+```
+
+The session cookies used by spiders for authenticating user accounts are obtained by means of [Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-concepts.html#gettingstarted-concepts-function) that use the [Playwright](https://playwright.dev/) browser automation library to orchestrate instances of the Chromium browser running in headless mode. The JavaScript code that runs in [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) using the Node runtime is contained in the `lambdas` directory. The subdirectory for each Lambda function contains a TypeScript file defining the function handler method, a `Dockerfile` for building the [deployment container image](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html), and a shell script that is executed when the Docker container is started.
+
 ### 1.4. Run Crawl in Local Development Environment
 
-To initiate a crawl from your local machine, change the current working directory to `crawler-project` and run the command <code>scrapy crawl _spider-name_</code>, substituting <code>_spider-name_</code> with the name of the spider you want to run. Alternatively, start the crawler by executing `scripts/crawl.py`.
+To initiate a crawl from your local machine, change the current working directory to `crawler-project` and run the command <code>scrapy crawl _spider-name_</code>, substituting <code>_spider-name_</code> with the name of the spider you want to run. Alternatively, start the crawler by executing `crawler/scripts/crawl.py`.
 
 The optional parameter `year` can be used to specify the year within which an article must have been published for it to be processed by the spider. If no year is specified, the spider defaults to processing only the most recently published articles. If starting the crawler using the `scrapy crawl` command, a value for the `year` parameter can be supplied by passing the key-value pair <code>year=_dddd_</code> to the `—a` option. If starting the crawler using the `crawl.py` script, a value for the parameter can be passed as a command line argument.
+
+### 1.5. Deployment
+
+### 1.6. Run Crawl in Production Environment
 
 ## 5. Cloud Development Kit
