@@ -24,9 +24,12 @@ export class CrawlerStack extends Stack {
         });
 
         const ftFunction = new lambda.DockerImageFunction(this, 'ft', {
-            code: lambda.DockerImageCode.fromImageAsset('../lambdas/ft', {
-                platform: Platform.LINUX_AMD64
-            }),
+            code: lambda.DockerImageCode.fromImageAsset(
+                '../crawler-project/lambdas/ft',
+                {
+                    platform: Platform.LINUX_AMD64
+                }
+            ),
             memorySize: 1024,
             timeout: Duration.seconds(60)
         });
