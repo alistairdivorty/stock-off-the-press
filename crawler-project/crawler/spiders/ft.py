@@ -1,4 +1,4 @@
-import dateutil.parser, json, logging, os
+import dateutil.parser, json, logging, os, re
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
 from scrapy.spiders import SitemapSpider
@@ -21,7 +21,9 @@ class FtSpider(SitemapSpider):
 
     def __init__(self, year: int | None = None, *args, **kwargs):
         super(FtSpider, self).__init__(*args, **kwargs)
-        self.year = year
+        self.year = int(year)
+        if not year:
+            self.sitemap_urls = ["https://www.ft.com/sitemaps/news.xml"]
 
     def start_requests(self):
         """Perform login by invoking Lambda function via API."""
@@ -55,13 +57,23 @@ class FtSpider(SitemapSpider):
 
     def sitemap_filter(self, entries):
         """Filter sitemap entries by their attributes."""
-        for entry in entries:
-            if entry["loc"].endswith("news.xml"):
-                continue
-            date_time = dateutil.parser.parse(entry["lastmod"])
-            if date_time.year != self.year:
-                continue
-            yield entry
+        if not self.year:
+            for entry in entries:
+                yield entry
+        else:
+            for entry in entries:
+                if entry["loc"].endswith("news.xml"):
+                    continue
+
+                filename = os.path.basename(entry["loc"])
+                match = re.search(r"archive-(\d{4})-", filename)
+
+                if match:
+                    year = int(match.group(1))
+                    if year != self.year:
+                        continue
+
+                yield entry
 
     def _parse_sitemap(self, response, **kwargs):
         """Recursively schedule requests for Sitemap entries."""
