@@ -48,6 +48,9 @@ RUN chmod 755 /usr/local/bin/aws-lambda-rie
 # Copy in handler function
 COPY index.js ${FUNCTION_DIR}
 
+# Override value of HOME environment variable
+ENV HOME=/tmp
+
 # Add script that starts RIC through emulator for local runs
 COPY entrypoint.sh /
 RUN chmod 755 /entrypoint.sh
