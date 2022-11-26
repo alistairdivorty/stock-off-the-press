@@ -1,11 +1,11 @@
 import { Construct } from 'constructs';
-import { Stack, StackProps, aws_ec2 as ec2 } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, aws_ec2 as ec2 } from 'aws-cdk-lib';
 
 export class VPCStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
-        new ec2.Vpc(this, 'VPC', {
+        const vpc = new ec2.Vpc(this, 'VPC', {
             vpcName: 'VPC',
             cidr: '10.0.0.0/16',
             natGateways: 1,
@@ -22,6 +22,14 @@ export class VPCStack extends Stack {
                     cidrMask: 24
                 }
             ]
+        });
+
+        new CfnOutput(this, 'VPCPublicSubnet1', {
+            value: vpc.publicSubnets[0].subnetId
+        });
+
+        new CfnOutput(this, 'VPCPublicSubnet2', {
+            value: vpc.publicSubnets[1].subnetId
         });
     }
 }
