@@ -91,9 +91,9 @@ The session cookies used by spiders for authenticating user accounts are obtaine
 
 To initiate a crawl from your local machine, change the current working directory to `crawler-project` and run the command <code>scrapy crawl _spider-name_</code>, substituting <code>_spider-name_</code> with the name of the spider you want to run. Alternatively, start the crawler by executing `crawler/scripts/crawl.py`.
 
-The optional parameter `year` can be used to specify the year within which an article must have been published for it to be processed by the spider. If no year is specified, the spider defaults to processing only the most recently published articles. If starting the crawler using the `scrapy crawl` command, a value for the `year` parameter can be supplied by passing the key–value pair <code>year=_dddd_</code> to the `—a` option. If starting the crawler using the `crawl.py` script, a value for the parameter can be passed as a command line argument.
+The optional parameter `year` can be used to specify the year within which an article must have been published for it to be processed by the spider. If no year is specified, the spider defaults to processing only the most recently published articles. If starting the crawler using the `scrapy crawl` command, a value for the `year` parameter can be supplied by passing the key–value pair <code>year=_yyyy_</code> to the `—a` option. If starting the crawler using the `crawl.py` script, a value for the parameter can be passed as a command line argument.
 
-The [Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html) cluster that acts as the data store for this project is deployed within an [Amazon Virtual Private Cloud (VPC)](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). The cluster can only be accessed directly by Amazon EC2 instances or other AWS services that are deployed within the same Amazon VPC. SSH tunneling (also known as port forwarding) can be used to access the DocumentDB cluster from outside the VPC. To create an SSH tunnel, you can connect to an EC2 instance running in the same VPC as the DocumentDB cluster that was provisioned specifically for this purpose.
+The [Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html) cluster that acts as the data store for this project is deployed within an [Amazon Virtual Private Cloud (VPC)](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). The cluster can only be accessed directly by [Amazon EC2](https://aws.amazon.com/ec2/getting-started/) instances or other AWS services that are deployed within the same Amazon VPC. SSH tunneling (also known as port forwarding) can be used to access the DocumentDB cluster from outside the VPC. To create an SSH tunnel, you can connect to an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instances-and-amis.html#instances) running in the same VPC as the DocumentDB cluster that was provisioned specifically for this purpose.
 
 As Transport Layer Security (TLS) is enabled on the cluster, you will need to download the public key for Amazon DocumentDB from https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem. The following operation downloads this file to the location specified by the `-P` option.
 
@@ -118,6 +118,20 @@ To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cd
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator.
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting <code><i>vpc-public-subnet-id</i></code> and <code><i>service-security-group-id</i></code> with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
+
+<pre><code>aws ecs run-task --profile=personal \
+    --launch-type FARGATE \
+    --cluster arn:aws:ecs:eu-west-1:424943402251:cluster/CrawlerStack-Crawler8C39B76C-CpA4B0H6Lpvu \
+    --task-definition CrawlerStackTaskFT3FC3F50B \
+    --network-configuration 'awsvpcConfiguration={subnets=[<i>vpc-public-subnet-id</i>],securityGroups=[<i>service-security-group-id</i>],assignPublicIp=ENABLED}' \
+    --overrides '{
+        "containerOverrides": [
+            {
+                "name": "<i>container-name</i>",
+                "command": ["sh", "-c", "python3 ./crawler/scripts/crawl.py <i>yyyy</i>"]
+            }
+        ]
+    }'</code></pre>
 
 ## 5. AWS CDK App
