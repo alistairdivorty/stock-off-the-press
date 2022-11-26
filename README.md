@@ -118,12 +118,12 @@ To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cd
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting <code><i>vpc-public-subnet-id</i></code> and <code><i>service-security-group-id</i></code> with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting <code><i>cluster-name</i></code>, <code><i>task-definition-name</i></code>, <code><i>vpc-public-subnet-id</i></code> and <code><i>service-security-group-id</i></code> with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
 
-<pre><code>aws ecs run-task --profile=personal \
+<pre><code>aws ecs run-task \
     --launch-type FARGATE \
-    --cluster arn:aws:ecs:eu-west-1:424943402251:cluster/CrawlerStack-Crawler8C39B76C-CpA4B0H6Lpvu \
-    --task-definition CrawlerStackTaskFT3FC3F50B \
+    --cluster arn:aws:ecs:eu-west-1:••••••:cluster/<i>cluster-name</i> \
+    --task-definition <i>task-definition-name</i> \
     --network-configuration 'awsvpcConfiguration={subnets=[<i>vpc-public-subnet-id</i>],securityGroups=[<i>service-security-group-id</i>],assignPublicIp=ENABLED}' \
     --overrides '{
         "containerOverrides": [
