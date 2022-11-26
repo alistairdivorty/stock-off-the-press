@@ -4,6 +4,7 @@ import {
     StackProps,
     Duration,
     RemovalPolicy,
+    CfnOutput,
     aws_ec2 as ec2,
     aws_lambda as lambda,
     aws_apigateway as apigateway,
@@ -24,9 +25,12 @@ export class CrawlerStack extends Stack {
         });
 
         const ftFunction = new lambda.DockerImageFunction(this, 'ft', {
-            code: lambda.DockerImageCode.fromImageAsset('../lambdas/ft', {
-                platform: Platform.LINUX_AMD64
-            }),
+            code: lambda.DockerImageCode.fromImageAsset(
+                '../crawler-project/lambdas/ft',
+                {
+                    platform: Platform.LINUX_AMD64
+                }
+            ),
             memorySize: 1024,
             timeout: Duration.seconds(60)
         });
@@ -105,9 +109,17 @@ export class CrawlerStack extends Stack {
             vpc: vpc
         });
 
+        new CfnOutput(this, 'ClusterName', {
+            value: cluster.clusterName
+        });
+
         const ftTaskDefinition = new ecs.FargateTaskDefinition(this, 'TaskFT', {
             memoryLimitMiB: 1024,
             cpu: 512
+        });
+
+        new CfnOutput(this, 'FtTaskDefinitionName', {
+            value: ftTaskDefinition.family
         });
 
         const envVarsBucket = new s3.Bucket(this, 'env-vars-bucket', {
