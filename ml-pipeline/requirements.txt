@@ -1,0 +1,6 @@
+boto3
+mlflow
+numpy
+pyarrow
+spark-nlp
+transformers[torch]
