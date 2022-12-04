@@ -38,9 +38,10 @@ Install the Python dependencies by running `pip install -r requirements.txt` fro
 
 Set the necessary environment variables by modifying the command below as required depending on the location of your Miniconda installation and environment name.
 
-<pre><code>conda env config vars set \
-PYTHONPATH=<i>path/to/project/dir/crawler-project</i>:$HOME/miniconda3/envs/<i>env-name</i>/lib/python3.10/site-packages</code></pre>
-
+```shell
+conda env config vars set \
+PYTHONPATH=path/to/project/dir/crawler-project:$HOME/opt/miniconda3/envs/env-name/lib/python3.10/site-packages
+```
 Reactivate the environment by running <code>conda activate _env-name_</code>.
 
 To create a file for storing environment variables, run `cp .env.example .env` from `crawler-project` directory.
@@ -97,20 +98,23 @@ The [Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerg
 
 As Transport Layer Security (TLS) is enabled on the cluster, you will need to download the public key for Amazon DocumentDB from https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem. The following operation downloads this file to the location specified by the `-P` option.
 
-```
+```shell
 wget https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem -P $HOME/.ssh
 ```
 
-Run the following command to set up an SSH tunnel to the DocumentDB cluster. The `-L` flag is used for forwarding a local port, in this case port `27018`.
+Run the following command to set up an SSH tunnel to the DocumentDB cluster. The `-L` flag is used for forwarding a local port, in this case port `27017`.
 
-<pre><code>
-ssh -i <i>path/to/public/key/</i>ec2-key-pair.pem \
--L 27018:production.••••••.eu-west-1.docdb.amazonaws.com:27017 \
-ec2-••••••.eu-west-1.compute.amazonaws.com -N</code></pre>
+```bash
+ssh -i $HOME/.ssh/ec2-key-pair.pem \
+-L 27017:production.••••••.eu-west-1.docdb.amazonaws.com:27017 \
+ec2-••••••.eu-west-1.compute.amazonaws.com -N
+```
 
-The connection URI for connecting an application to the DocumentDB cluster should be formatted as below.
+The connection URI for connecting the application to the DocumentDB cluster should be formatted as below.
 
-<pre><code>mongodb://<i>username</i>:<i>password</i>@localhost:27018/<i>dbname</i>?tlsAllowInvalidHostnames=true&ssl=true&tlsCaFile=<i>path/to/public/key/</i>rds-combined-ca-bundle.pem&directConnection=true</code></pre>
+```shell
+mongodb://username:••••••@localhost:27017/dbname?tlsAllowInvalidHostnames=true&ssl=true&tlsCaFile=$HOME/.ssh/rds-combined-ca-bundle.pem&directConnection=true
+```
 
 ### 1.6. Deployment
 
@@ -118,20 +122,22 @@ To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cd
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting <code><i>cluster-name</i></code>, <code><i>task-definition-name</i></code>, <code><i>vpc-public-subnet-id</i></code> and <code><i>service-security-group-id</i></code> with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `cluster-name`, `task-definition-name`, `vpc-public-subnet-id` and `service-security-group-id` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
 
-<pre><code>aws ecs run-task \
+```shell
+aws ecs run-task \
     --launch-type FARGATE \
-    --cluster arn:aws:ecs:eu-west-1:••••••:cluster/<i>cluster-name</i> \
-    --task-definition <i>task-definition-name</i> \
-    --network-configuration 'awsvpcConfiguration={subnets=[<i>vpc-public-subnet-id</i>],securityGroups=[<i>service-security-group-id</i>],assignPublicIp=ENABLED}' \
+    --cluster arn:aws:ecs:eu-west-1:••••••:cluster/cluster-name \
+    --task-definition task-definition-name \
+    --network-configuration 'awsvpcConfiguration={subnets=[vpc-public-subnet-id],securityGroups=[service-security-group-id],assignPublicIp=ENABLED}' \
     --overrides '{
         "containerOverrides": [
             {
-                "name": "<i>container-name</i>",
-                "command": ["sh", "-c", "python3 ./crawler/scripts/crawl.py <i>yyyy</i>"]
+                "name": "container-name",
+                "command": ["sh", "-c", "python3 ./crawler/scripts/crawl.py yyyy"]
             }
         ]
-    }'</code></pre>
+    }'
+```
 
 ## 5. AWS CDK App
