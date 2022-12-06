@@ -1,7 +1,8 @@
 import { chromium, BrowserContext, Page } from 'playwright';
+import * as path from 'path';
 const isLambdaRuntimeEnv = process.env.AWS_EXECUTION_ENV === 'AWS_Lambda_Image';
 const tmpDir = '/tmp';
-const userDataDir = tmpDir + '/chrome-user-data';
+const userDataDir = path.join(tmpDir, 'chrome-user-data');
 
 interface Event {
     email: string;

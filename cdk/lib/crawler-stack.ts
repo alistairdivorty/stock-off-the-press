@@ -32,7 +32,10 @@ export class CrawlerStack extends Stack {
                 }
             ),
             memorySize: 1024,
-            timeout: Duration.seconds(60)
+            timeout: Duration.seconds(60),
+            environment: {
+                HOME: '/tmp'
+            }
         });
 
         const api = new apigateway.RestApi(this, 'crawler-api', {

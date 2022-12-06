@@ -5,6 +5,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType, StructField, StringType
 from inference.services.spark import start_spark
 from inference.transformers.summarizer import Summarizer
+import os
 
 
 def main():
@@ -12,7 +13,7 @@ def main():
 
     df = _extract(spark)
 
-    df = _transform(df)
+    df = _transform(df, config.get("models", {}).get("emrfsModelPath", None))
 
     _load(df)
 
@@ -55,7 +56,7 @@ def _extract(spark: SparkSession) -> DataFrame:
     )
 
 
-def _transform(df: DataFrame) -> DataFrame:
+def _transform(df: DataFrame, emrsModelPath: str | None) -> DataFrame:
     return PipelineModel(
         stages=[
             Summarizer(
@@ -65,13 +66,20 @@ def _transform(df: DataFrame) -> DataFrame:
                 maxLength=200,
                 lengthPenalty=2.0,
                 numBeams=4,
+                emrfsModelPath=emrsModelPath,
             )
         ]
     ).transform(df)
 
 
 def _load(df: DataFrame):
-    df.write.format("mongo").mode("append").option("collection", "articles").save()
+    (
+        df.write.format("mongo")
+        .mode("append")
+        .option("collection", "articles")
+        .option("replaceDocument", "false")
+        .save()
+    )
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from inference.services import logger
 
 
 def start_spark(
-    app_name="distributed-inference",
+    app_name="stock-off-the-press",
     master="local[*]",
     jars_packages=[],
     jars=[],
@@ -47,8 +47,6 @@ def start_spark(
 
     spark_sess = spark_builder.getOrCreate()
     spark_logger = logger.Log4j(spark_sess)
-
-    spark_sess.sparkContext.setCheckpointDir("/tmp/checkpoints")
 
     # get config files if sent to cluster with --files
     spark_files_dir = SparkFiles.getRootDirectory()

@@ -43,6 +43,18 @@ export class DocDBStack extends Stack {
             }
         );
 
+        const clusterParameterGroup = new docdb.ClusterParameterGroup(
+            this,
+            'cluster-parameter-group',
+            {
+                family: 'docdb4.0',
+                parameters: {
+                    tls: process.env.DB_CLUSTER_TLS as string
+                },
+                dbClusterParameterGroupName: 'custom'
+            }
+        );
+
         const docDBCluster = new docdb.CfnDBCluster(
             this,
             'documentdb-cluster',
@@ -50,6 +62,8 @@ export class DocDBStack extends Stack {
                 storageEncrypted: true,
                 availabilityZones: vpc.availabilityZones,
                 dbClusterIdentifier: 'documentdb-base',
+                dbClusterParameterGroupName:
+                    clusterParameterGroup.parameterGroupName,
                 masterUsername: process.env.DB_MASTER_USERNAME as string,
                 masterUserPassword: process.env
                     .DB_MASTER_USER_PASSWORD as string,

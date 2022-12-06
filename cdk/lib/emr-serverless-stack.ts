@@ -4,7 +4,9 @@ import {
     StackProps,
     RemovalPolicy,
     Size,
+    DockerImage,
     CfnOutput,
+    Fn,
     aws_emrserverless as emrs,
     aws_ec2 as ec2,
     aws_s3 as s3,
@@ -13,6 +15,8 @@ import {
     aws_iam as iam
 } from 'aws-cdk-lib';
 import { S3CopyObject } from './custom-resources/s3-copy-object/s3-copy-object';
+import * as os from 'os';
+import * as path from 'path';
 
 export class EMRServerlessStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
@@ -45,13 +49,13 @@ export class EMRServerlessStack extends Stack {
             exclude: ['packages.tar.gz']
         });
 
-        const asset = new assets.Asset(this, 'EnvironmentAsset', {
+        const environmentAsset = new assets.Asset(this, 'EnvironmentAsset', {
             path: '../ml-pipeline/artifacts/packages.tar.gz'
         });
 
         new S3CopyObject(this, 'S3CopyObjectResource', {
             Bucket: bucket.bucketName,
-            CopySource: `/${asset.s3BucketName}/${asset.s3ObjectKey}`,
+            CopySource: `/${environmentAsset.s3BucketName}/${environmentAsset.s3ObjectKey}`,
             Key: 'artifacts/packages.tar.gz'
         });
 
@@ -75,23 +79,78 @@ export class EMRServerlessStack extends Stack {
             destinationKeyPrefix: 'config'
         });
 
-        new CfnOutput(this, 'JobsURL', {
+        const certificatesAsset = new assets.Asset(
+            this,
+            'BundledCertificates',
+            {
+                path: path.join(os.homedir(), '.ssh'),
+                bundling: {
+                    image: DockerImage.fromBuild('../ml-pipeline', {
+                        file: 'cacerts.Dockerfile'
+                    }),
+                    command: [
+                        'sh',
+                        '-c',
+                        `keytool -importcert \
+                        -keystore /asset-output/cacerts.p12 \
+                        -storepass ${process.env.TRUSTSTORE_PASSWORD} \
+                        -file rds-ca-2019-root.pem \
+                        -alias RDS \
+                        -no-prompt; \
+                        keytool -importkeystore \
+                        -srckeystore /asset-output/cacerts.p12 \
+                        -srcstoretype pkcs12 \
+                        -srcstorepass ${process.env.TRUSTSTORE_PASSWORD} \
+                        -destkeystore /asset-output/cacerts.jks \
+                        -deststorepass ${process.env.TRUSTSTORE_PASSWORD} \
+                        -deststoretype jks`
+                    ]
+                }
+            }
+        );
+
+        const certificatesDeployment = new s3deploy.BucketDeployment(
+            this,
+            'CertificatesDeployment',
+            {
+                sources: [
+                    s3deploy.Source.bucket(
+                        certificatesAsset.bucket,
+                        certificatesAsset.s3ObjectKey
+                    )
+                ],
+                destinationBucket: bucket,
+                destinationKeyPrefix: 'cacerts',
+                extract: false
+            }
+        );
+
+        new CfnOutput(this, 'JobsURI', {
             value: bucket.s3UrlForObject('jobs/')
         });
 
-        new CfnOutput(this, 'ConfigsURL', {
+        new CfnOutput(this, 'ConfigsURI', {
             value: bucket.s3UrlForObject('config/')
         });
 
-        new CfnOutput(this, 'ArtifactsURL', {
+        new CfnOutput(this, 'ArtifactsURI', {
             value: bucket.s3UrlForObject('artifacts/')
         });
 
-        new CfnOutput(this, 'ModelsURL', {
+        new CfnOutput(this, 'ModelsURI', {
             value: bucket.s3UrlForObject('models/')
         });
 
-        new CfnOutput(this, 'LogsURL', {
+        new CfnOutput(this, 'CertificatesURI', {
+            value: certificatesDeployment.deployedBucket.s3UrlForObject(
+                path.join(
+                    'cacerts',
+                    Fn.select(0, certificatesDeployment.objectKeys)
+                )
+            )
+        });
+
+        new CfnOutput(this, 'LogsURI', {
             value: bucket.s3UrlForObject('logs/')
         });
 
