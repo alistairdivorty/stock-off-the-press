@@ -32,7 +32,7 @@ This application consists of Python classes – or “spiders” – that define
 
 Start by installing the conda package and environment manager. The [Miniconda](https://docs.conda.io/en/latest/miniconda.html#) installer can be used to install a small, bootstrap version of Anaconda that includes only conda, Python, the packages they depend on, and a small number of other useful packages, including pip.
 
-To create a fresh conda environment, run <code>conda create -n _env-name_ python=3.10</code>, substituting <code>_env-name_</code> with your desired environment name. Once the environment has been created, activate the environment by running <code>conda activate _env-name_</code>.
+To create a fresh conda environment, run `conda create -n <env-name> python=3.10`, substituting `<env-name>` with your desired environment name. Once the environment has been created, activate the environment by running `conda activate <env-name>`.
 
 Install the Python dependencies by running `pip install -r requirements.txt` from the `crawler-project` directory. Install the Node dependencies by running `npm install` from the `crawler-project/lambdas` directory.
 
@@ -40,9 +40,9 @@ Set the necessary environment variables by modifying the command below as requir
 
 ```shell
 conda env config vars set \
-PYTHONPATH=path/to/project/dir/crawler-project:$HOME/opt/miniconda3/envs/env-name/lib/python3.10/site-packages
+PYTHONPATH=<path/to/project/dir>/crawler-project:$HOME/opt/miniconda3/envs/<env-name>/lib/python3.10/site-packages
 ```
-Reactivate the environment by running <code>conda activate _env-name_</code>.
+Reactivate the environment by running `conda activate <env-name>`.
 
 To create a file for storing environment variables, run `cp .env.example .env` from the `crawler-project` directory.
 
@@ -90,9 +90,9 @@ The session cookies used by spiders for authenticating user accounts are obtaine
 
 ### 1.5. Run Crawl in Local Development Environment
 
-To initiate a crawl from your local machine, change the current working directory to `crawler-project` and run the command <code>scrapy crawl _spider-name_</code>, substituting <code>_spider-name_</code> with the name of the spider you want to run. Alternatively, start the crawler by executing `crawler/scripts/crawl.py`.
+To initiate a crawl from your local machine, change the current working directory to `crawler-project` and run the command `scrapy crawl <spider-name>`, substituting `<spider-name>` with the name of the spider you want to run. Alternatively, start the crawler by executing `crawler/scripts/crawl.py`.
 
-The optional parameter `year` can be used to specify the year within which an article must have been published for it to be processed by the spider. If no year is specified, the spider defaults to processing only the most recently published articles. If starting the crawler using the `scrapy crawl` command, a value for the `year` parameter can be supplied by passing the key–value pair <code>year=_yyyy_</code> to the `—a` option. If starting the crawler using the `crawl.py` script, a value for the parameter can be passed as a command line argument.
+The optional parameter `year` can be used to specify the year within which an article must have been published for it to be processed by the spider. If no year is specified, the spider defaults to processing only the most recently published articles. If starting the crawler using the `scrapy crawl` command, a value for the `year` parameter can be supplied by passing the key–value pair `year=<yyyy>` to the `—a` option. If starting the crawler using the `crawl.py` script, a value for the parameter can be passed as a command line argument.
 
 The [Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html) cluster that acts as the data store for this project is deployed within an [Amazon Virtual Private Cloud (VPC)](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). The cluster can only be accessed directly by [Amazon EC2](https://aws.amazon.com/ec2/getting-started/) instances or other AWS services that are deployed within the same Amazon VPC. SSH tunneling (also known as port forwarding) can be used to access the DocumentDB cluster from outside the VPC. To create an SSH tunnel, you can connect to an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instances-and-amis.html#instances) running in the same VPC as the DocumentDB cluster that was provisioned specifically for this purpose.
 
@@ -113,7 +113,7 @@ ec2-••••••.eu-west-1.compute.amazonaws.com -N
 The connection URI for connecting the application to the DocumentDB cluster should be formatted as below.
 
 ```
-mongodb://username:••••••@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&tlsCaFile=$HOME/.ssh/rds-combined-ca-bundle.pem&directConnection=true
+mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&tlsCaFile=$HOME/.ssh/rds-combined-ca-bundle.pem&directConnection=true&retryWrites=false
 ```
 
 ### 1.6. Deployment
@@ -122,19 +122,19 @@ To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cd
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `cluster-name`, `task-definition-name`, `vpc-public-subnet-id` and `service-security-group-id` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `<cluster-name>`, `<task-definition-name>`, `<vpc-public-subnet-id>` and `<service-security-group-id>` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
 
 ```shell
 aws ecs run-task \
     --launch-type FARGATE \
-    --cluster arn:aws:ecs:eu-west-1:••••••:cluster/cluster-name \
-    --task-definition task-definition-name \
-    --network-configuration 'awsvpcConfiguration={subnets=[vpc-public-subnet-id],securityGroups=[service-security-group-id],assignPublicIp=ENABLED}' \
+    --cluster arn:aws:ecs:eu-west-1:••••••:cluster/<cluster-name> \
+    --task-definition <task-definition-name> \
+    --network-configuration 'awsvpcConfiguration={subnets=[<vpc-public-subnet-id>],securityGroups=[<service-security-group-id>],assignPublicIp=ENABLED}' \
     --overrides '{
         "containerOverrides": [
             {
-                "name": "container-name",
-                "command": ["sh", "-c", "python3 ./crawler/scripts/crawl.py yyyy"]
+                "name": "<container-name>",
+                "command": ["sh", "-c", "python3 ./crawler/scripts/crawl.py <yyyy>"]
             }
         ]
     }'
@@ -170,7 +170,7 @@ This is an application for performing distributed batch processing of ML workloa
 
 Start by installing the conda package and environment manager. The [Miniconda](https://docs.conda.io/en/latest/miniconda.html#) installer can be used to install a small, bootstrap version of Anaconda that includes only conda, Python, the packages they depend on, and a small number of other useful packages, including pip.
 
-To create a fresh conda environment, run <code>conda create -n _env-name_ python=3.10</code>, substituting <code>_env-name_</code> with your desired environment name. Once the environment has been created, activate the environment by running <code>conda activate _env-name_</code>.
+To create a fresh conda environment, run `conda create -n <env-name> python=3.10`, substituting `<env-name>` with your desired environment name. Once the environment has been created, activate the environment by running `conda activate <env-name>`.
 
 Next, install the project dependencies, including distributions of [Apache Hadoop](https://hadoop.apache.org/) and [Apache Spark](https://spark.apache.org/), by running `pip install -r requirements_dev.txt` from the `ml-pipeline` directory.
 
@@ -178,14 +178,14 @@ Set the necessary environment variables by modifying the command below as requir
 
 ```shell
 conda env config vars set \
-PYTHONPATH=path/to/project/dir/ml-pipeline:$HOME/opt/miniconda3/envs/env-name/lib/python3.10/site-packages \
-SPARK_HOME=$HOME/opt/miniconda3/envs/env-name/lib/python3.10/site-packages/pyspark \
-PYSPARK_PYTHON=$HOME/opt/miniconda3/envs/env-name/bin/python \
-PYSPARK_DRIVER_PYTHON=$HOME/opt/miniconda3/envs/env-name/bin/python \
+PYTHONPATH=<path/to/project/dir>/ml-pipeline:$HOME/opt/miniconda3/envs/<env-name>/lib/python3.10/site-packages \
+SPARK_HOME=$HOME/opt/miniconda3/envs/<env-name>/lib/python3.10/site-packages/pyspark \
+PYSPARK_PYTHON=$HOME/opt/miniconda3/envs/<env-name>/bin/python \
+PYSPARK_DRIVER_PYTHON=$HOME/opt/miniconda3/envs/<env-name>/bin/python \
 OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 ```
 
-Reactivate the environment by running <code>conda activate _env-name_</code>.
+Reactivate the environment by running `conda activate <env-name>`.
 
 To create a file for storing environment variables, run `cp .env.example .env`.
 
@@ -272,9 +272,9 @@ The following example shows how to submit a job to a local standalone Spark clus
 ```shell
 $SPARK_HOME/bin/spark-submit \
 --master "local[*]" \
---packages "org.apache.hadoop:hadoop-aws:3.3.2,org.mongodb.spark:mongo-spark-connector_2.12:3.0.2,com.github.jelmerk:hnswlib-spark_3.3_2.12:1.0.1,com.johnsnowlabs.nlp:spark-nlp-m1_2.12:4.2.1" \
---conf "spark.mongodb.input.uri=mongodb://username:••••••@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&retryWrites=false" \
---conf "spark.mongodb.output.uri=mongodb://username:••••••@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&retryWrites=false" \
+--packages "org.apache.hadoop:hadoop-aws:3.3.2,org.mongodb.spark:mongo-spark-connector_2.12:3.0.2,com.johnsnowlabs.nlp:spark-nlp-m1_2.12:4.2.1" \
+--conf "spark.mongodb.input.uri=mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&directConnection=true&retryWrites=false" \
+--conf "spark.mongodb.output.uri=mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&directConnection=true&retryWrites=false" \
 --conf "fs.s3a.aws.credentials.provider=com.amazonaws.auth.DefaultAWSCredentialsProviderChain" \
 --conf "spark.driver.memory=10g" \
 --conf "spark.kryoserializer.buffer.max=2000M" \
@@ -289,7 +289,7 @@ As Transport Layer Security (TLS) is enabled on the cluster, you will need to do
 wget https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem -P $HOME/.ssh
 ```
 
-Run the following command to add the public key to the Java certificates file.
+Run the following command to add the public key to the Java TrustStore.
 
 ```shell
 sudo keytool -import -alias RDS -file $HOME/.ssh/rds-ca-2019-root.pem -cacerts
@@ -306,7 +306,7 @@ ec2-••••••.eu-west-1.compute.amazonaws.com -N
 The connection URI for connecting the application to the DocumentDB cluster should be formatted as below.
 
 ```
-mongodb://username:••••••@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&retryWrites=false
+mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostnames=true&ssl=true&directConnection=true&retryWrites=false
 ```
 
 ### 2.7. Deployment
@@ -319,29 +319,29 @@ The project also includes a Dockerfile with instructions for fetching model file
 
 #### 2.7.2 Deploy CloudFormation Stack
 
-To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK Toolkit outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role and S3 URIs for the `jobs`, `config`, `cacerts`, `artifacts`, `models` and `logs` folders.
+To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK Toolkit outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role, S3 URIs for the `jobs`, `config`, `artifacts`, `models` and `logs` folders, and the S3 URI for the ZIP archive containing a custom Java KeyStore.
 
 ### 2.8. Run Job in Production Environment
 
-The following is an example of how to submit a job to the [EMR Serverless](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/emr-serverless.html) application deployed by the [AWS CDK app](#5-aws-cdk-app) using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html).
+The following is an example of how to submit a job to the [EMR Serverless](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/emr-serverless.html) application deployed by the [AWS CDK app](#5-aws-cdk-app) using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html). The placeholder values should be replaced with the values outputted by the CDK app after deployment.
 
 ```shell
 aws emr-serverless start-job-run \
     --execution-timeout-minutes 10 \
     --region eu-west-1 \
-    --application-id application-ID \
-    --execution-role-arn role-ARN \
+    --application-id <application-ID> \
+    --execution-role-arn <role-ARN> \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://bucket-name/jobs/summarize.py",
+            "entryPoint": "s3://<bucket-name>/jobs/summarize.py",
             "entryPointArguments": [],
-            "sparkSubmitParameters": "--conf spark.emr-serverless.driver.disk=30g --conf spark.emr-serverless.executor.disk=30g --conf spark.emr-serverless.executor.instances=10 --conf spark.archives=s3://bucket-name/artifacts/packages.tar.gz#environment --conf spark.jars=s3://bucket-name/artifacts/uber-JAR.jar --files=s3://bucket-name/config/models.json,s3://bucket-name/cacerts/cacerts.jks --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.mongodb.input.uri=mongodb://username:••••••@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false --conf spark.mongodb.output.uri=mongodb://username:••••••@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false --conf spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=cacerts.jks --conf spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=cacerts.jks --conf spark.kryoserializer.buffer.max=2000M"
+            "sparkSubmitParameters": "--conf spark.archives=s3://<bucket-name>/artifacts/packages.tar.gz#environment,s3://<bucket-name>/cacerts/<asset-hash>.zip#cacerts --conf spark.jars=s3://<bucket-name>/artifacts/uber-JAR.jar --files=s3://<bucket-name>/config/models.json --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.driver.disk=30g --conf spark.emr-serverless.executor.disk=30g --conf spark.emr-serverless.executor.instances=10 --conf spark.mongodb.input.uri=mongodb://<username>:<password>@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&directConnection=true&retryWrites=false --conf spark.mongodb.output.uri=mongodb://<username>:<password>@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&directConnection=true&retryWrites=false --conf spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=./cacerts/cacerts.jks --conf spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=./cacerts/cacerts.jks --conf spark.kryoserializer.buffer.max=2000M"
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://bucket-name/logs/"
+                "logUri": "s3://<bucket-name>/logs/"
             }
         }
     }'
