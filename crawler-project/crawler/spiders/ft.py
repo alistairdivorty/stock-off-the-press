@@ -19,9 +19,9 @@ class FtSpider(SitemapSpider):
     sitemap_urls = ["https://www.ft.com/sitemaps/index.xml"]
     year: int | None
 
-    def __init__(self, year: int | None = None, *args, **kwargs):
+    def __init__(self, year: int | str | None = None, *args, **kwargs):
         super(FtSpider, self).__init__(*args, **kwargs)
-        self.year = int(year)
+        self.year = None if not year else int(year)
         if not year:
             self.sitemap_urls = ["https://www.ft.com/sitemaps/news.xml"]
 

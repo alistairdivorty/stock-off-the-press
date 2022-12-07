@@ -1,0 +1,6 @@
+mlflow
+pyspark
+pytest
+python-dotenv
+spark-nlp
+transformers[torch]
