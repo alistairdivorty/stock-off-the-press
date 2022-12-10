@@ -5,7 +5,6 @@ from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType, StructField, StringType
 from inference.services.spark import start_spark
 from inference.transformers.summarizer import Summarizer
-import os
 
 
 def main():
@@ -48,7 +47,6 @@ def _extract(spark: SparkSession) -> DataFrame:
                             "text": 1,
                         }
                     },
-                    {"$limit": 1},
                 ]
             ),
         )
@@ -56,14 +54,14 @@ def _extract(spark: SparkSession) -> DataFrame:
     )
 
 
-def _transform(df: DataFrame, emrsModelPath: str | None) -> DataFrame:
+def _transform(df: DataFrame, emrsModelPath: str | None = None) -> DataFrame:
     return PipelineModel(
         stages=[
             Summarizer(
                 inputCol="text",
                 outputCol="summary",
-                minLength=100,
-                maxLength=200,
+                minLength=50,
+                maxLength=100,
                 lengthPenalty=2.0,
                 numBeams=4,
                 emrfsModelPath=emrsModelPath,

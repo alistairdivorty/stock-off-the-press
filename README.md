@@ -3,6 +3,8 @@
 This monorepo contains an application for crawling sources of market news, a machine learning pipeline for predicting the effect of news stories on stock prices, a workflow manager for application orchestration, a web application for serving model inferences, and an application for provisioning the required cloud infrastructure.
 
 - [Crawler](#1-crawler)
+- [ML Pipeline](#2-ml-pipeline)
+- [Workflow Manager](#3-workflow-manager)
 - [AWS CDK App](#5-aws-cdk-app)
 
 ## 1. Crawler
@@ -42,6 +44,7 @@ Set the necessary environment variables by modifying the command below as requir
 conda env config vars set \
 PYTHONPATH=<path/to/project/dir>/crawler-project:$HOME/opt/miniconda3/envs/<env-name>/lib/python3.10/site-packages
 ```
+
 Reactivate the environment by running `conda activate <env-name>`.
 
 To create a file for storing environment variables, run `cp .env.example .env` from the `crawler-project` directory.
@@ -122,7 +125,7 @@ To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cd
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `<cluster-name>`, `<task-definition-name>`, `<vpc-public-subnet-id>` and `<service-security-group-id>` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider. 
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `<cluster-name>`, `<task-definition-name>`, `<vpc-public-subnet-id>` and `<service-security-group-id>` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider.
 
 ```shell
 aws ecs run-task \
@@ -217,7 +220,7 @@ This project uses the [pytest](https://docs.pytest.org/en/7.1.x/) software testi
  ┃ ┃ ┗ 📜summarizer.py
  ┃ ┗ 📜summarizer.py
  ┣ 📂jobs
- ┃ ┗ 📜summarize.py
+ ┃ ┗ 📜summarization.py
  ┣ 📂scripts
  ┃ ┣ 📜download_models.py
  ┃ ┗ 📜package_models.py
@@ -278,7 +281,7 @@ $SPARK_HOME/bin/spark-submit \
 --conf "fs.s3a.aws.credentials.provider=com.amazonaws.auth.DefaultAWSCredentialsProviderChain" \
 --conf "spark.driver.memory=10g" \
 --conf "spark.kryoserializer.buffer.max=2000M" \
-jobs/summarize.py
+jobs/summarization.py
 ```
 
 The [Amazon DocumentDB](https://docs.aws.amazon.com/documentdb/latest/developerguide/what-is.html) cluster that acts as the data store for this project is deployed within an [Amazon Virtual Private Cloud (VPC)](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html). The cluster can only be accessed directly by [Amazon EC2](https://aws.amazon.com/ec2/getting-started/) instances or other AWS services that are deployed within the same Amazon VPC. SSH tunneling (also known as port forwarding) can be used to access the DocumentDB cluster from outside the VPC. To create an SSH tunnel, you can connect to an [EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instances-and-amis.html#instances) running in the same VPC as the DocumentDB cluster that was provisioned specifically for this purpose.
@@ -319,7 +322,7 @@ The project also includes a Dockerfile with instructions for fetching model file
 
 #### 2.7.2 Deploy CloudFormation Stack
 
-To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK Toolkit outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role, S3 URIs for the `jobs`, `config`, `artifacts`, `models` and `logs` folders, and the S3 URI for the ZIP archive containing a custom Java KeyStore.
+To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK app outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role, S3 URIs for the `jobs`, `config`, `artifacts`, `models` and `logs` folders, and the S3 URI for the ZIP archive containing a custom Java KeyStore.
 
 ### 2.8. Run Job in Production Environment
 
@@ -333,7 +336,7 @@ aws emr-serverless start-job-run \
     --execution-role-arn <role-ARN> \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://<bucket-name>/jobs/summarize.py",
+            "entryPoint": "s3://<bucket-name>/jobs/summarization.py",
             "entryPointArguments": [],
             "sparkSubmitParameters": "--conf spark.archives=s3://<bucket-name>/artifacts/packages.tar.gz#environment,s3://<bucket-name>/cacerts/<asset-hash>.zip#cacerts --conf spark.jars=s3://<bucket-name>/artifacts/uber-JAR.jar --files=s3://<bucket-name>/config/models.json --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.driver.disk=30g --conf spark.emr-serverless.executor.disk=30g --conf spark.emr-serverless.executor.instances=10 --conf spark.mongodb.input.uri=mongodb://<username>:<password>@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&directConnection=true&retryWrites=false --conf spark.mongodb.output.uri=mongodb://<username>:<password>@production.••••••.eu-west-1.docdb.amazonaws.com:27017/stock-press?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&directConnection=true&retryWrites=false --conf spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=./cacerts/cacerts.jks --conf spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=./cacerts/cacerts.jks --conf spark.kryoserializer.buffer.max=2000M"
         }
@@ -346,6 +349,58 @@ aws emr-serverless start-job-run \
         }
     }'
 ```
+
+## 3. Workflow Manager
+
+- [What It Does](#31-what-it-does)
+- [Airflow with Fargate Architecture](#32-airflow-with-fargate-architecture)
+- [Directory Structure](#33-directory-structure)
+- [Deployment](#34-deployment)
+- [Run Workflow in Production Environment](#35-run-workflow-in-production-environment)
+
+### 3.1. What It Does
+
+This is an [Apache Airflow](https://airflow.apache.org/) application for automating and orchestrating data pipelines that comprise interdependent stages. The application is designed to run on an [Amazon Elastic Container Service](https://aws.amazon.com/ecs/) cluster using the [AWS Fargate](https://aws.amazon.com/fargate/) serverless compute engine.
+
+### 3.2. Airflow with Fargate Architecture
+
+The infrastructure components of an Airflow application fall into two categories: those needed for Airflow itself to operate, and those used to run tasks. The following components belong to the first category.
+
+- The **Webserver** for hosting the [Airflow UI](https://airflow.apache.org/docs/apache-airflow/stable/ui.html), which allows users to trigger and monitor workflows.
+- The **Scheduler** for triggering the task instances whose dependencies have been met.
+- The **Metadata Database** for storing configuration data and information about past and present workflow runs.
+- The **Executor** that provides the mechanism by which task instances get run.
+
+The Webserver and Scheduler are run in Docker containers deployed to [Amazon Elastic Container Service](https://aws.amazon.com/ecs/) that are started by [AWS Fargate](https://aws.amazon.com/fargate/). The Metadata Database is an [Amazon RDS](https://aws.amazon.com/rds/) PostgreSQL instance. The [Celery Executor](https://airflow.apache.org/docs/apache-airflow/stable/executor/celery.html), with [Amazon SQS](https://aws.amazon.com/sqs/) as the [queue broker](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/sqs.html), is used to run task instances.
+
+A [DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html) – or a Directed Acyclic Graph – is a collection of tasks organized in a way that reflects their relationships and dependencies. Each DAG is defined in a Python script that represents the DAG's structure (tasks and their dependencies) as code. Workers are the resources that run the DAG code. An [Airflow Task](https://airflow.apache.org/docs/apache-airflow/stable/concepts/tasks.html) is created by instantiating an [Operator](https://airflow.apache.org/docs/apache-airflow/stable/concepts/operators.html) class. An operator is used to execute the operation that the task needs to perform. A dedicated Fargate task acts as the worker that monitors the queue for messages and either executes tasks directly or uses the [Amazon ECS operator](https://airflow.apache.org/docs/apache-airflow-providers-amazon/stable/operators/ecs.html) to execute tasks using additional capacity provisioned by either AWS Fargate or [Amazon EC2](https://aws.amazon.com/ec2/).
+
+### 3.3. Directory Structure
+
+```
+📦workflow-manager
+ ┣ 📂airflow
+ ┃ ┣ 📂config
+ ┃ ┃ ┣ 📜scheduler_entry.sh
+ ┃ ┃ ┣ 📜webserver_entry.sh
+ ┃ ┃ ┗ 📜worker_entry.sh
+ ┃ ┣ 📂dags
+ ┃ ┃ ┣ 📜ecs_dag.py
+ ┃ ┃ ┗ 📜emr_dag.py
+ ┃ ┗ 📜Dockerfile
+ ┗ 📂tasks
+ ┃ ┗ 📂ecs_task
+ ┃ ┃ ┣ 📜Dockerfile
+ ┃ ┃ ┗ 📜app.py
+```
+
+### 3.4. Deployment
+
+To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy FarFlowStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app outputs the address of the Network Load Balancer that exposes the Airflow Webserver.
+
+### 3.5. Run Workflow in Production Environment
+
+To trigger a DAG manually, navigate to the web address outputted by the AWS CDK app and log in to the Airflow UI as "admin" using the password specified by the `AIRFLOW_ADMIN_PASSWORD` environment variable. Select the **Trigger DAG** option from the dropdown activated by clicking the play button in the **Actions** column for the DAG you want to run.
 
 ## 5. AWS CDK App
 
@@ -382,9 +437,22 @@ Install the Node dependencies by running `npm install` from the `cdk` directory.
  ┣ 📂cdk.out
  ┣ 📂lib
  ┃ ┣ 📂custom-resources
- ┃ ┃ ┗ 📂s3-copy-object
+ ┃ ┃ ┣ 📂s3-copy-object
  ┃ ┃ ┃ ┣ 📜s3-copy-object-handler.py
  ┃ ┃ ┃ ┗ 📜s3-copy-object.ts
+ ┃ ┣ 📂farflow-stack
+ ┃ ┃ ┣ 📂constructs
+ ┃ ┃ ┃ ┣ 📜airflow-construct.ts
+ ┃ ┃ ┃ ┣ 📜dag-tasks.ts
+ ┃ ┃ ┃ ┣ 📜rds.ts
+ ┃ ┃ ┃ ┣ 📜service-construct.ts
+ ┃ ┃ ┃ ┗ 📜task-construct.ts
+ ┃ ┃ ┣ 📜config.ts
+ ┃ ┃ ┣ 📜farflow-stack.ts
+ ┃ ┃ ┗ 📜policies.ts
+ ┃ ┣ 📜config.ts
+ ┃ ┣ 📜farflow-stack.ts
+ ┃ ┗ 📜policies.ts
  ┃ ┣ 📜crawler-stack.ts
  ┃ ┣ 📜docdb-stack.ts
  ┃ ┣ 📜emr-serverless-stack.ts
@@ -406,8 +474,8 @@ Install the Node dependencies by running `npm install` from the `cdk` directory.
  ┣ 📜package-lock.json
  ┣ 📜package.json
  ┗ 📜tsconfig.json
- ```
- 
+```
+
 ### 5.4. Testing
 
 This project uses the [Jest](https://jestjs.io/) software testing framework. Run `npm run test` to execute all tests.

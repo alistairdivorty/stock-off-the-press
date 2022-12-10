@@ -5,6 +5,7 @@ import { CrawlerStack } from '../lib/crawler-stack';
 import { VPCStack } from '../lib/vpc-stack';
 import { DocDBStack } from '../lib/docdb-stack';
 import { EMRServerlessStack } from '../lib/emr-serverless-stack';
+import { FarFlowStack } from '../lib/farflow-stack/farflow-stack';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,3 +24,5 @@ new CrawlerStack(app, 'CrawlerStack', { env });
 new DocDBStack(app, 'DocDBStack', { env });
 
 new EMRServerlessStack(app, 'EMRServerlessStack', { env });
+
+new FarFlowStack(app, 'FarFlowStack', { env });

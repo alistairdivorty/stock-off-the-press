@@ -126,19 +126,23 @@ export class EMRServerlessStack extends Stack {
         );
 
         new CfnOutput(this, 'JobsURI', {
-            value: bucket.s3UrlForObject('jobs/')
+            value: bucket.s3UrlForObject('jobs/'),
+            exportName: 'JobsURI'
         });
 
         new CfnOutput(this, 'ConfigsURI', {
-            value: bucket.s3UrlForObject('config/')
+            value: bucket.s3UrlForObject('config/'),
+            exportName: 'ConfigsURI'
         });
 
         new CfnOutput(this, 'ArtifactsURI', {
-            value: bucket.s3UrlForObject('artifacts/')
+            value: bucket.s3UrlForObject('artifacts/'),
+            exportName: 'ArtifactsURI'
         });
 
         new CfnOutput(this, 'ModelsURI', {
-            value: bucket.s3UrlForObject('models/')
+            value: bucket.s3UrlForObject('models/'),
+            exportName: 'ModelsURI'
         });
 
         new CfnOutput(this, 'CertificatesURI', {
@@ -147,11 +151,13 @@ export class EMRServerlessStack extends Stack {
                     'cacerts',
                     Fn.select(0, certificatesDeployment.objectKeys)
                 )
-            )
+            ),
+            exportName: 'CertificatesURI'
         });
 
         new CfnOutput(this, 'LogsURI', {
-            value: bucket.s3UrlForObject('logs/')
+            value: bucket.s3UrlForObject('logs/'),
+            exportName: 'LogsURI'
         });
 
         const s3AccessPolicy = new iam.PolicyDocument({
@@ -205,7 +211,8 @@ export class EMRServerlessStack extends Stack {
         );
 
         new CfnOutput(this, 'EMRServerlessJobRoleARN', {
-            value: emrServerlessJobRole.roleArn
+            value: emrServerlessJobRole.roleArn,
+            exportName: 'JobRoleARN'
         });
 
         const vpc = ec2.Vpc.fromLookup(this, 'vpc', {
@@ -235,7 +242,8 @@ export class EMRServerlessStack extends Stack {
         });
 
         new CfnOutput(this, 'ApplicationID', {
-            value: emrServerlessApp.attrApplicationId
+            value: emrServerlessApp.attrApplicationId,
+            exportName: 'ApplicationID'
         });
     }
 }
