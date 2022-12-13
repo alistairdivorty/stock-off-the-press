@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import {
     Stack,
     StackProps,
+    CfnOutput,
     aws_ec2 as ec2,
     aws_docdb as docdb,
     aws_iam as iam
@@ -87,6 +88,16 @@ export class DocDBStack extends Stack {
         );
 
         dbInstance.addDependsOn(docDBCluster);
+
+        new CfnOutput(this, 'DocDBEndpoint', {
+            value: dbInstance.attrEndpoint,
+            exportName: 'DocDBEndpoint'
+        });
+
+        new CfnOutput(this, 'DocDBPort', {
+            value: dbInstance.attrPort,
+            exportName: 'DocDBPort'
+        });
 
         const jumpBoxSecurityGroup = new ec2.SecurityGroup(
             this,

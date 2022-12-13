@@ -7,7 +7,7 @@ export class VPCStack extends Stack {
 
         const vpc = new ec2.Vpc(this, 'VPC', {
             vpcName: 'VPC',
-            cidr: '10.0.0.0/16',
+            ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
             natGateways: 1,
             maxAzs: 2,
             subnetConfiguration: [
