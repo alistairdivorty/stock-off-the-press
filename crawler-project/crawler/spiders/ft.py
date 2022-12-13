@@ -1,4 +1,5 @@
 import dateutil.parser, json, logging, os, re
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 from cryptography.fernet import Fernet
 from scrapy.spiders import SitemapSpider
@@ -18,6 +19,9 @@ class FtSpider(SitemapSpider):
     allowed_domains = ["ft.com"]
     sitemap_urls = ["https://www.ft.com/sitemaps/index.xml"]
     year: int | None
+    custom_settings = {
+        "ITEM_PIPELINES": {"crawler.pipelines.crawler_pipeline.CrawlerPipeline": 543}
+    }
 
     def __init__(self, year: int | str | None = None, *args, **kwargs):
         super(FtSpider, self).__init__(*args, **kwargs)
@@ -152,6 +156,9 @@ class FtSpider(SitemapSpider):
             headline=linked_data_news_article["headline"],
             description=linked_data_news_article["description"],
             topic=linked_data_breadcrumb_list["itemListElement"][2]["name"],
+            topic_url_path=urlparse(
+                linked_data_breadcrumb_list["itemListElement"][2]["item"]
+            ).path,
             text=linked_data_news_article["articleBody"],
             date_published=dateutil.parser.parse(
                 linked_data_news_article["datePublished"]
