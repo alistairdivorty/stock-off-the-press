@@ -21,6 +21,7 @@ export class AirflowConstruct extends Construct {
         const adminPassword = process.env.AIRFLOW_ADMIN_PASSWORD as string;
 
         const ENV_VARS = {
+            AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: '60',
             AIRFLOW__CORE__SQL_ALCHEMY_CONN: props.dbConnection,
             AIRFLOW__CELERY__BROKER_URL: 'sqs://',
             AIRFLOW__CELERY__RESULT_BACKEND: `db+${props.dbConnection}`,

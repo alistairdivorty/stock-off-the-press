@@ -1,4 +1,5 @@
 import os
+from distutils.util import strtobool
 from urllib.parse import urlunsplit, urlencode
 from dotenv import load_dotenv
 import scrapy
@@ -7,18 +8,21 @@ from crawler.items import SymbolItem
 
 load_dotenv()
 
-eodhd_api_token = os.environ["EODHD_API_TOKEN"]
+EODHD_API_TOKEN = os.environ["EODHD_API_TOKEN"]
 
 
 class ExchangeSpider(scrapy.Spider):
     name = "exchange"
+    start_urls: list
+    delisted: str | int
     custom_settings = {
         "ITEM_PIPELINES": {"crawler.pipelines.exchange_pipeline.ExchangePipeline": 543}
     }
 
-    def __init__(self, year: int | str | None = None, *args, **kwargs):
+    def __init__(self, delisted: str | int = 0, *args, **kwargs):
         super(ExchangeSpider, self).__init__(*args, **kwargs)
         self.start_urls = [eodhd_api_url("exchanges-list")]
+        self.delisted = delisted
 
     def start_requests(self):
         for url in self.start_urls:
@@ -28,8 +32,7 @@ class ExchangeSpider(scrapy.Spider):
         for exchange in response.json():
             yield Request(
                 eodhd_api_url(
-                    "exchange-symbol-list",
-                    exchange["Code"],
+                    "exchange-symbol-list", exchange["Code"], delisted=self.delisted
                 )
             )
 
@@ -44,7 +47,7 @@ def eodhd_api_url(api_slug: str, *path_params, **query_params) -> str:
             "https",
             "eodhistoricaldata.com",
             os.path.join("api", api_slug, *path_params),
-            urlencode(dict(fmt="json", api_token=eodhd_api_token, **query_params)),
+            urlencode(dict(fmt="json", api_token=EODHD_API_TOKEN, **query_params)),
             "",
         )
     )
