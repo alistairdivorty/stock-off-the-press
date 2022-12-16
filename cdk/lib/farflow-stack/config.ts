@@ -51,8 +51,8 @@ export const defaultWorkerConfig: ContainerConfig = {
 };
 
 export const airflowTaskConfig: AirflowTaskConfig = {
-    cpu: 2048,
-    memoryLimitMiB: 5120,
+    cpu: 512,
+    memoryLimitMiB: 3072,
     webserverConfig: defaultWebserverConfig,
     schedulerConfig: defaultSchedulerConfig,
     workerConfig: defaultWorkerConfig,
