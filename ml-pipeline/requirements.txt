@@ -2,5 +2,8 @@ boto3
 mlflow
 numpy
 pyarrow
+pyspark-hnsw
+python-Levenshtein
 spark-nlp
+thefuzz
 transformers[torch]
