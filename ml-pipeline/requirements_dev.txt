@@ -1,6 +1,9 @@
 mlflow
 pyspark
+pyspark-hnsw
 pytest
 python-dotenv
+python-Levenshtein
 spark-nlp
+thefuzz
 transformers[torch]

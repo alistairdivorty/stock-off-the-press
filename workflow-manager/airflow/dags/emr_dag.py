@@ -137,12 +137,28 @@ with DAG(
         configuration_overrides=SPARK_CONFIGURATION_OVERRIDES,
     )
 
-    print(start_ner_job.output)
-
     wait_for_ner_job = EmrServerlessJobSensor(
         task_id="wait_for_ner_job",
         application_id=application_id,
         job_run_id=start_ner_job.output,
+    )
+
+    start_knn_job = EmrServerlessStartJobOperator(
+        task_id="start_knn_job",
+        application_id=application_id,
+        execution_role_arn=emrs_stack_output_value("JobRoleARN"),
+        job_driver=spark_job_driver(
+            "knn",
+            entry_point_args=["--similarity-threshold", "0.3", "--num-partitions", "2"],
+            executor_instances=2,
+        ),
+        configuration_overrides=SPARK_CONFIGURATION_OVERRIDES,
+    )
+
+    wait_for_knn_job = EmrServerlessJobSensor(
+        task_id="wait_for_knn_job",
+        application_id=application_id,
+        job_run_id=start_knn_job.output,
     )
 
     chain(
@@ -150,4 +166,6 @@ with DAG(
         wait_for_summarization_job,
         start_ner_job,
         wait_for_ner_job,
+        start_knn_job,
+        wait_for_knn_job,
     )
