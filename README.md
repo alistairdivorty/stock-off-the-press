@@ -400,7 +400,7 @@ To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](http
 
 ### 3.5. Run Workflow in Production Environment
 
-To trigger a DAG manually, navigate to the web address outputted by the AWS CDK app and log in to the Airflow UI as "admin" using the password specified by the `AIRFLOW_ADMIN_PASSWORD` environment variable. Select the **Trigger DAG** option from the dropdown activated by clicking the play button in the **Actions** column for the DAG you want to run.
+To trigger a DAG manually, navigate to the web address outputted by the AWS CDK app and log in to the Airflow UI as "admin" using the password stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) under the name "airflow/admin". Select the **Trigger DAG** option from the dropdown activated by clicking the play button in the **Actions** column for the DAG you want to run.
 
 ## 5. AWS CDK App
 
@@ -438,8 +438,11 @@ Install the Node dependencies by running `npm install` from the `cdk` directory.
  ┣ 📂lib
  ┃ ┣ 📂custom-resources
  ┃ ┃ ┣ 📂s3-copy-object
- ┃ ┃ ┃ ┣ 📜s3-copy-object-handler.py
+ ┃ ┃ ┃ ┣ 📜handler.py
  ┃ ┃ ┃ ┗ 📜s3-copy-object.ts
+ ┃ ┃ ┣ 📂postgres-create-database
+ ┃ ┃ ┃ ┣ 📜handler.py
+ ┃ ┃ ┃ ┗ 📜postgres-create-database.ts
  ┃ ┣ 📂farflow-stack
  ┃ ┃ ┣ 📂constructs
  ┃ ┃ ┃ ┣ 📜airflow-construct.ts
@@ -452,7 +455,7 @@ Install the Node dependencies by running `npm install` from the `cdk` directory.
  ┃ ┃ ┗ 📜policies.ts
  ┃ ┣ 📜config.ts
  ┃ ┣ 📜farflow-stack.ts
- ┃ ┗ 📜policies.ts
+ ┃ ┣ 📜policies.ts
  ┃ ┣ 📜crawler-stack.ts
  ┃ ┣ 📜docdb-stack.ts
  ┃ ┣ 📜emr-serverless-stack.ts

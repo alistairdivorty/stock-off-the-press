@@ -26,7 +26,6 @@ export class FarFlowStack extends Stack {
         );
 
         const rds = new RDSConstruct(this, 'RDSPostgres', {
-            defaultVpcSecurityGroup: defaultVpcSecurityGroup,
             vpc: vpc
         });
 
