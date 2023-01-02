@@ -1,9 +1,12 @@
 import { Construct } from 'constructs';
-import * as cdk from 'aws-cdk-lib';
-import * as logs from 'aws-cdk-lib/aws-logs';
-import * as cr from 'aws-cdk-lib/custom-resources';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as iam from 'aws-cdk-lib/aws-iam';
+import {
+    CustomResource,
+    Duration,
+    aws_iam as iam,
+    aws_logs as logs,
+    custom_resources as cr,
+    aws_lambda as lambda
+} from 'aws-cdk-lib';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -25,15 +28,12 @@ export class S3CopyObject extends Construct {
             {
                 uuid: 'f7d4f730-4ee1-11e8-9c2d-fa7ae01bbebc',
                 code: new lambda.InlineCode(
-                    fs.readFileSync(
-                        path.join(__dirname, 's3-copy-object-handler.py'),
-                        {
-                            encoding: 'utf-8'
-                        }
-                    )
+                    fs.readFileSync(path.join(__dirname, 'handler.py'), {
+                        encoding: 'utf-8'
+                    })
                 ),
                 handler: 'index.on_event',
-                timeout: cdk.Duration.minutes(6),
+                timeout: Duration.minutes(6),
                 runtime: lambda.Runtime.PYTHON_3_9,
                 role: new iam.Role(this, 'S3CopyObjectLambdaRole', {
                     assumedBy: new iam.CompositePrincipal(
@@ -60,7 +60,7 @@ export class S3CopyObject extends Construct {
             logRetention: logs.RetentionDays.ONE_DAY
         });
 
-        const resource = new cdk.CustomResource(this, 'S3CopyObjectResource', {
+        const resource = new CustomResource(this, 'S3CopyObjectResource', {
             serviceToken: myProvider.serviceToken,
             properties: props
         });

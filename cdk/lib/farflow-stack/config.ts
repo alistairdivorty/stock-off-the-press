@@ -1,5 +1,4 @@
-import { aws_ec2 as ec2, aws_logs as logs } from 'aws-cdk-lib';
-import { DBConfig } from './constructs/rds';
+import { aws_logs as logs } from 'aws-cdk-lib';
 
 export interface AirflowTaskConfig {
     readonly cpu: number;
@@ -51,24 +50,12 @@ export const defaultWorkerConfig: ContainerConfig = {
 };
 
 export const airflowTaskConfig: AirflowTaskConfig = {
-    cpu: 512,
-    memoryLimitMiB: 3072,
+    cpu: 1024,
+    memoryLimitMiB: 5120,
     webserverConfig: defaultWebserverConfig,
     schedulerConfig: defaultSchedulerConfig,
     workerConfig: defaultWorkerConfig,
     logRetention: logs.RetentionDays.ONE_DAY
     // Uncomment to have dedicated worker pool that can be auto-scaled as per workerAutoScalingConfig.
     // createWorkerPool: true
-};
-
-export const defaultDBConfig: DBConfig = {
-    dbName: 'farflow',
-    port: 5432,
-    masterUsername: 'airflow',
-    instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T4G,
-        ec2.InstanceSize.MICRO
-    ),
-    allocatedStorageInGB: 5,
-    backupRetentionInDays: 5
 };

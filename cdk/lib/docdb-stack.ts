@@ -5,7 +5,8 @@ import {
     CfnOutput,
     aws_ec2 as ec2,
     aws_docdb as docdb,
-    aws_iam as iam
+    aws_iam as iam,
+    aws_secretsmanager as sm
 } from 'aws-cdk-lib';
 import * as dotenv from 'dotenv';
 
@@ -56,6 +57,12 @@ export class DocDBStack extends Stack {
             }
         );
 
+        const secret = sm.Secret.fromSecretNameV2(
+            this,
+            'secret',
+            'docdb/master'
+        );
+
         const docDBCluster = new docdb.CfnDBCluster(
             this,
             'documentdb-cluster',
@@ -65,9 +72,12 @@ export class DocDBStack extends Stack {
                 dbClusterIdentifier: 'documentdb-base',
                 dbClusterParameterGroupName:
                     clusterParameterGroup.parameterGroupName,
-                masterUsername: process.env.DB_MASTER_USERNAME as string,
-                masterUserPassword: process.env
-                    .DB_MASTER_USER_PASSWORD as string,
+                masterUsername: secret
+                    .secretValueFromJson('username')
+                    .toString(),
+                masterUserPassword: secret
+                    .secretValueFromJson('password')
+                    .toString(),
                 vpcSecurityGroupIds: [docDBSecurityGroup.securityGroupId],
                 dbSubnetGroupName: docDBSubnetGroup.dbSubnetGroupName,
                 port: 27017

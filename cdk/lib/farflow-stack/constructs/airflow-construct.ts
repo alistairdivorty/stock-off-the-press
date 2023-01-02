@@ -1,5 +1,10 @@
 import { Construct } from 'constructs';
-import { CfnOutput, aws_ec2 as ec2, aws_ecs as ecs } from 'aws-cdk-lib';
+import {
+    CfnOutput,
+    aws_ec2 as ec2,
+    aws_ecs as ecs,
+    aws_secretsmanager as sm
+} from 'aws-cdk-lib';
 import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import { airflowTaskConfig, ContainerConfig } from '../config';
 import { ServiceConstruct } from './service-construct';
@@ -18,7 +23,17 @@ export class AirflowConstruct extends Construct {
     constructor(parent: Construct, name: string, props: AirflowConstructProps) {
         super(parent, name);
 
-        const adminPassword = process.env.AIRFLOW_ADMIN_PASSWORD as string;
+        const airflowSecret = sm.Secret.fromSecretNameV2(
+            this,
+            'secret',
+            'airflow/admin'
+        );
+
+        const dbSecret = sm.Secret.fromSecretNameV2(
+            this,
+            'secret',
+            'rds/postgres/master'
+        );
 
         const ENV_VARS = {
             AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL: '60',
@@ -27,16 +42,21 @@ export class AirflowConstruct extends Construct {
             AIRFLOW__CELERY__RESULT_BACKEND: `db+${props.dbConnection}`,
             AIRFLOW__CORE__EXECUTOR: 'CeleryExecutor',
             AIRFLOW__WEBSERVER__RBAC: 'True',
-            ADMIN_PASS: adminPassword,
+            ADMIN_PASS: airflowSecret
+                .secretValueFromJson('password')
+                .toString(),
             CLUSTER: props.cluster.clusterName,
             SECURITY_GROUP: props.defaultVpcSecurityGroup.securityGroupId,
             SUBNETS: props.privateSubnets
                 .map((subnet) => subnet.subnetId)
                 .join(','),
-            DB_DATABASE_NAME: process.env.DB_DATABASE_NAME as string,
-            DB_MASTER_USERNAME: process.env.DB_MASTER_USERNAME as string,
-            DB_MASTER_USER_PASSWORD: process.env
-                .DB_MASTER_USER_PASSWORD as string
+            DB_DATABASE_NAME: 'farflow',
+            DB_MASTER_USERNAME: dbSecret
+                .secretValueFromJson('username')
+                .toString(),
+            DB_MASTER_USER_PASSWORD: dbSecret
+                .secretValueFromJson('password')
+                .toString()
         };
 
         const logging = new ecs.AwsLogDriver({
@@ -66,15 +86,15 @@ export class AirflowConstruct extends Construct {
             });
         }
 
-        let mmap = new Map();
+        const mmap = new Map();
         mmap.set(airflowTaskConfig.webserverConfig, airflowTask);
         mmap.set(airflowTaskConfig.schedulerConfig, airflowTask);
         mmap.set(airflowTaskConfig.workerConfig, workerTask);
 
         // Add containers to corresponding Tasks.
-        for (let entry of mmap.entries()) {
-            let containerInfo: ContainerConfig = entry[0];
-            let task: ecs.FargateTaskDefinition = entry[1];
+        for (const entry of mmap.entries()) {
+            const containerInfo: ContainerConfig = entry[0];
+            const task: ecs.FargateTaskDefinition = entry[1];
 
             task.addContainer(containerInfo.name, {
                 image: ecs.ContainerImage.fromDockerImageAsset(
