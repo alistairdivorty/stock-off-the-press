@@ -19,7 +19,8 @@ class ArticleItem(scrapy.Item):
     corp = scrapy.Field()
     symbol = scrapy.Field()
     exchange = scrapy.Field()
-    price = scrapy.Field()
+    prices = scrapy.Field()
+    vectorized = scrapy.Field()
 
 
 class SymbolItem(scrapy.Item):
