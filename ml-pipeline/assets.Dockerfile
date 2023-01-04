@@ -18,6 +18,13 @@ RUN unzip \
     bert_large_token_classifier_conll03_en_3.2.0_2.4_1628171471927.zip \
     -d models/bert_large_token_classifier_conll03_en
 
+RUN wget \
+    https://s3.amazonaws.com/auxdata.johnsnowlabs.com/public/models/sent_bert_large_cased_en_2.6.0_2.4_1598346401930.zip
+
+RUN unzip \
+    sent_bert_large_cased_en_2.6.0_2.4_1598346401930 \
+    -d models/sent_bert_large_cased_en
+
 FROM python:3.10 as download_transformers_models
 
 RUN pip install transformers[torch]

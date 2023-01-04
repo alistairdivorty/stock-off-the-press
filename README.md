@@ -211,6 +211,7 @@ This project uses the [pytest](https://docs.pytest.org/en/7.1.x/) software testi
  ┃ ┃ ┣ 📂facebook_bart_large_cnn
  ┃ ┃ ┗ 📂sentence_detector_dl_xx
  ┣ 📂config
+ ┣ 📂data
  ┣ 📂inference
  ┃ ┣ 📂services
  ┃ ┃ ┣ 📜logger.py

@@ -161,6 +161,24 @@ with DAG(
         job_run_id=start_knn_job.output,
     )
 
+    start_vectorization_job = EmrServerlessStartJobOperator(
+        task_id="start_vectorization_job",
+        application_id=application_id,
+        execution_role_arn=emrs_stack_output_value("JobRoleARN"),
+        job_driver=spark_job_driver(
+            "vectorization",
+            entry_point_args=["--data-dest-path", emrs_stack_output_value("DataURI")],
+            executor_instances=2,
+        ),
+        configuration_overrides=SPARK_CONFIGURATION_OVERRIDES,
+    )
+
+    wait_for_vectorization_job = EmrServerlessJobSensor(
+        task_id="wait_for_vectorization_job",
+        application_id=application_id,
+        job_run_id=start_vectorization_job.output,
+    )
+
     chain(
         start_summarization_job,
         wait_for_summarization_job,
@@ -168,4 +186,6 @@ with DAG(
         wait_for_ner_job,
         start_knn_job,
         wait_for_knn_job,
+        start_vectorization_job,
+        wait_for_vectorization_job,
     )
