@@ -28,8 +28,11 @@
   },
   "dependencies": {
     "aws-cdk-lib": "^2.53.0",
+    "cdk-nextjs-standalone": "^2.0.3",
     "constructs": "^10.0.0",
     "dotenv": "^16.0.3",
+    "esbuild": "^0.16.10",
+    "esbuild-darwin-arm64": "^0.15.18",
     "source-map-support": "^0.5.21"
   }
 }
