@@ -19,6 +19,7 @@ import {
 } from 'aws-cdk-lib';
 import { ApiGateway } from 'aws-cdk-lib/aws-route53-targets';
 import { PostgresCreateDatabase } from './custom-resources/postgres-create-database/postgres-create-database';
+import { Nextjs } from 'cdk-nextjs-standalone';
 
 export class WebAppStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
@@ -163,6 +164,15 @@ export class WebAppStack extends Stack {
             zone: hostedZone,
             recordName: 'api.stockoffthepress.com',
             target: route53.RecordTarget.fromAlias(new ApiGateway(api))
+        });
+
+        const nextjs = new Nextjs(this, 'WebFrontend', {
+            nextjsPath: '../web-frontend',
+            projectRoot: '..'
+        });
+
+        new CfnOutput(this, 'WebFrontendURL', {
+            value: nextjs.url
         });
     }
 }
