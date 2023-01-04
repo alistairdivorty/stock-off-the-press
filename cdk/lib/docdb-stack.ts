@@ -74,10 +74,10 @@ export class DocDBStack extends Stack {
                     clusterParameterGroup.parameterGroupName,
                 masterUsername: secret
                     .secretValueFromJson('username')
-                    .toString(),
+                    .unsafeUnwrap(),
                 masterUserPassword: secret
                     .secretValueFromJson('password')
-                    .toString(),
+                    .unsafeUnwrap(),
                 vpcSecurityGroupIds: [docDBSecurityGroup.securityGroupId],
                 dbSubnetGroupName: docDBSubnetGroup.dbSubnetGroupName,
                 port: 27017

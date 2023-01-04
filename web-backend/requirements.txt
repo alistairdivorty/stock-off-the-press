@@ -1,0 +1,6 @@
+Django
+django-cors-headers
+dnspython
+pymongo
+python-dotenv
+zappa

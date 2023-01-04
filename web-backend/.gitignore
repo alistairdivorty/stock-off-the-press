@@ -1,0 +1,6 @@
+venv
+bundle.zip
+.env
+.env.*
+**/__pycache__/
+**/.DS_STORE
