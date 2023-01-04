@@ -25,13 +25,13 @@ export class AirflowConstruct extends Construct {
 
         const airflowSecret = sm.Secret.fromSecretNameV2(
             this,
-            'secret',
+            'AirflowSecret',
             'airflow/admin'
         );
 
         const dbSecret = sm.Secret.fromSecretNameV2(
             this,
-            'secret',
+            'DatabaseSecret',
             'rds/postgres/master'
         );
 
@@ -44,7 +44,7 @@ export class AirflowConstruct extends Construct {
             AIRFLOW__WEBSERVER__RBAC: 'True',
             ADMIN_PASS: airflowSecret
                 .secretValueFromJson('password')
-                .toString(),
+                .unsafeUnwrap(),
             CLUSTER: props.cluster.clusterName,
             SECURITY_GROUP: props.defaultVpcSecurityGroup.securityGroupId,
             SUBNETS: props.privateSubnets
@@ -53,10 +53,10 @@ export class AirflowConstruct extends Construct {
             DB_DATABASE_NAME: 'farflow',
             DB_MASTER_USERNAME: dbSecret
                 .secretValueFromJson('username')
-                .toString(),
+                .unsafeUnwrap(),
             DB_MASTER_USER_PASSWORD: dbSecret
                 .secretValueFromJson('password')
-                .toString()
+                .unsafeUnwrap()
         };
 
         const logging = new ecs.AwsLogDriver({

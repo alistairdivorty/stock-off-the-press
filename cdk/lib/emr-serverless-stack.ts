@@ -145,6 +145,11 @@ export class EMRServerlessStack extends Stack {
             exportName: 'ModelsURI'
         });
 
+        new CfnOutput(this, 'DataURI', {
+            value: bucket.s3UrlForObject('data/'),
+            exportName: 'DataURI'
+        });
+
         new CfnOutput(this, 'CertificatesURI', {
             value: certificatesDeployment.deployedBucket.s3UrlForObject(
                 path.join(
