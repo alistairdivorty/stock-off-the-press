@@ -1,7 +1,4 @@
-from transformers import (
-    BartForConditionalGeneration,
-    BartTokenizer,
-)
+from transformers import BartTokenizer, BartForConditionalGeneration
 
-BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn")
 BartTokenizer.from_pretrained("facebook/bart-large-cnn")
+BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn")
