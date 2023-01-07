@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from urllib.parse import urlunsplit, urlencode
 import scrapy
 from scrapy import Request
@@ -18,8 +18,11 @@ class PriceSpider(scrapy.Spider):
     name = "price"
     from_: datetime | None
     custom_settings = {
-        "ITEM_PIPELINES": {"crawler.pipelines.price_pipeline.PricePipeline": 543},
-        "CONCURRENT_REQUESTS": 3
+        "ITEM_PIPELINES": {
+            "crawler.pipelines.price_pipeline.PricePipeline": 543,
+        },
+        "CONCURRENT_REQUESTS": 10,
+        "DUPEFILTER_CLASS": "scrapy.dupefilters.BaseDupeFilter",
     }
 
     def __init__(self, from_: str | None = None, *args, **kwargs):
@@ -27,7 +30,7 @@ class PriceSpider(scrapy.Spider):
         self.from_ = (
             datetime.strptime(from_, "%Y-%m-%d")
             if from_ is not None
-            else datetime.now()
+            else datetime.combine(datetime.now(), time.min)
         )
 
     def start_requests(self):
@@ -37,7 +40,6 @@ class PriceSpider(scrapy.Spider):
                 {
                     "symbol": {"$exists": True},
                     "date_published": {"$gt": self.from_},
-                    "prices": {"$exists": False},
                 }
             )
         )

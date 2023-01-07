@@ -113,7 +113,13 @@ export class CrawlerStack extends Stack {
         });
 
         new CfnOutput(this, 'ClusterName', {
-            value: cluster.clusterName
+            value: cluster.clusterName,
+            exportName: 'ClusterName'
+        });
+
+        new CfnOutput(this, 'PublicSubnets', {
+            value: vpc.publicSubnets.map((s) => s.subnetId).join(','),
+            exportName: 'PublicSubnets'
         });
 
         const ftTaskDefinition = new ecs.FargateTaskDefinition(this, 'TaskFT', {
@@ -122,7 +128,22 @@ export class CrawlerStack extends Stack {
         });
 
         new CfnOutput(this, 'FtTaskDefinitionName', {
-            value: ftTaskDefinition.family
+            value: ftTaskDefinition.family,
+            exportName: 'FtTaskDefinitionName'
+        });
+
+        const priceTaskDefinition = new ecs.FargateTaskDefinition(
+            this,
+            'TaskPrice',
+            {
+                memoryLimitMiB: 1024,
+                cpu: 512
+            }
+        );
+
+        new CfnOutput(this, 'PriceTaskDefinitionName', {
+            value: priceTaskDefinition.family,
+            exportName: 'PriceTaskDefinitionName'
         });
 
         const envVarsBucket = new s3.Bucket(this, 'env-vars-bucket', {
@@ -155,10 +176,18 @@ export class CrawlerStack extends Stack {
         ftTaskDefinition.addToTaskRolePolicy(s3Policy);
         ftTaskDefinition.addToExecutionRolePolicy(s3Policy);
 
-        new ecs.FargateService(this, 'ServiceFT', {
+        priceTaskDefinition.addToTaskRolePolicy(s3Policy);
+        priceTaskDefinition.addToExecutionRolePolicy(s3Policy);
+
+        const ftService = new ecs.FargateService(this, 'ServiceFT', {
             cluster: cluster,
             taskDefinition: ftTaskDefinition,
             desiredCount: 0
+        });
+
+        new CfnOutput(this, 'FtFargateServiceSecurityGroup', {
+            value: ftService.connections.securityGroups[0].securityGroupId,
+            exportName: 'FtFargateServiceSecurityGroup'
         });
 
         ftTaskDefinition.addContainer('container-ft', {
@@ -167,6 +196,33 @@ export class CrawlerStack extends Stack {
             }),
             logging: ecs.LogDrivers.awsLogs({
                 streamPrefix: 'FT',
+                logRetention: logs.RetentionDays.THREE_DAYS
+            }),
+            environmentFiles: [
+                ecs.EnvironmentFile.fromBucket(
+                    envVarsBucket,
+                    'crawler/production.env'
+                )
+            ]
+        });
+
+        const priceService = new ecs.FargateService(this, 'ServicePrice', {
+            cluster: cluster,
+            taskDefinition: priceTaskDefinition,
+            desiredCount: 0
+        });
+
+        new CfnOutput(this, 'PriceFargateServiceSecurityGroup', {
+            value: priceService.connections.securityGroups[0].securityGroupId,
+            exportName: 'PriceFargateServiceSecurityGroup'
+        });
+
+        priceTaskDefinition.addContainer('container-price', {
+            image: ecs.ContainerImage.fromAsset('../crawler-project', {
+                platform: Platform.LINUX_AMD64
+            }),
+            logging: ecs.LogDrivers.awsLogs({
+                streamPrefix: 'Price',
                 logRetention: logs.RetentionDays.THREE_DAYS
             }),
             environmentFiles: [
