@@ -99,7 +99,7 @@ class Vectorizer(
         embeddings_finisher = (
             EmbeddingsFinisher()
             .setInputCols("sentence_embeddings")
-            .setOutputCols("embeddings")
+            .setOutputCols(self.getOutputCol())
             .setOutputAsVector(True)
         )
 
