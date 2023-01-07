@@ -6,8 +6,10 @@ from airflow.models.baseoperator import chain
 from airflow.models.dag import DAG
 from airflow.providers.amazon.aws.operators.emr import EmrServerlessStartJobOperator
 from airflow.providers.amazon.aws.sensors.emr import EmrServerlessJobSensor
+from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
 
-DAG_ID = "EMR_Serverless_ML_Pipeline"
+
+DAG_ID = "ML_Model_Training"
 
 client = boto3.client("cloudformation")
 
@@ -17,9 +19,10 @@ get_stack_outputs = lambda stack_name: client.describe_stacks(StackName=stack_na
 
 docdb_stack_outputs = get_stack_outputs("DocDBStack")
 emrs_stack_outputs = get_stack_outputs("EMRServerlessStack")
+crawler_stack_outputs = get_stack_outputs("CrawlerStack")
 
 get_stack_output_value = lambda stack_outputs, export_name: next(
-    o for o in stack_outputs if o["ExportName"] == export_name
+    o for o in stack_outputs if o.get("ExportName") == export_name
 )["OutputValue"]
 
 docdb_stack_output_value = lambda export_name: get_stack_output_value(
@@ -27,6 +30,9 @@ docdb_stack_output_value = lambda export_name: get_stack_output_value(
 )
 emrs_stack_output_value = lambda export_name: get_stack_output_value(
     emrs_stack_outputs, export_name
+)
+crawler_stack_output_value = lambda export_name: get_stack_output_value(
+    crawler_stack_outputs, export_name
 )
 
 
@@ -161,6 +167,34 @@ with DAG(
         job_run_id=start_knn_job.output,
     )
 
+    run_price_task = EcsRunTaskOperator(
+        task_id="run_price_task",
+        cluster=crawler_stack_output_value("ClusterName"),
+        task_definition=crawler_stack_output_value("PriceTaskDefinitionName"),
+        launch_type="FARGATE",
+        overrides={
+            "containerOverrides": [
+                {
+                    "name": "container-price",
+                    "command": [
+                        "sh",
+                        "-c",
+                        "python3 ./crawler/scripts/fetch_prices.py",
+                    ],
+                },
+            ],
+        },
+        network_configuration={
+            "awsvpcConfiguration": {
+                "subnets": crawler_stack_output_value("PublicSubnets").split(","),
+                "securityGroups": [
+                    crawler_stack_output_value("PriceFargateServiceSecurityGroup")
+                ],
+                "assignPublicIp": "ENABLED",
+            },
+        },
+    )
+
     start_vectorization_job = EmrServerlessStartJobOperator(
         task_id="start_vectorization_job",
         application_id=application_id,
@@ -186,6 +220,7 @@ with DAG(
         wait_for_ner_job,
         start_knn_job,
         wait_for_knn_job,
+        run_price_task,
         start_vectorization_job,
         wait_for_vectorization_job,
     )
