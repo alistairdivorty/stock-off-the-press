@@ -209,6 +209,9 @@ This project uses the [pytest](https://docs.pytest.org/en/7.1.x/) software testi
  ┃ ┗ 📂models
  ┃ ┃ ┣ 📂bert_large_token_classifier_conll03_en
  ┃ ┃ ┣ 📂facebook_bart_large_cnn
+ ┃ ┃ ┣ 📂gbt
+ ┃ ┃ ┣ 📂hnswlib
+ ┃ ┃ ┣ 📂sent_bert_large_cased_en
  ┃ ┃ ┗ 📂sentence_detector_dl_xx
  ┣ 📂config
  ┣ 📂data
@@ -218,9 +221,14 @@ This project uses the [pytest](https://docs.pytest.org/en/7.1.x/) software testi
  ┃ ┃ ┗ 📜spark.py
  ┃ ┣ 📂transformers
  ┃ ┃ ┣ 📜named_entity_recognizer.py
- ┃ ┃ ┗ 📜summarizer.py
+ ┃ ┃ ┣ 📜summarizer.py
+ ┃ ┃ ┗ 📜vectorizer.py
  ┃ ┗ 📜summarizer.py
  ┣ 📂jobs
+ ┃ ┣ 📜classification.py
+ ┃ ┣ 📜knn.py
+ ┃ ┣ 📜ner.py
+ ┃ ┣ 📜prediction.py
  ┃ ┗ 📜summarization.py
  ┣ 📂scripts
  ┃ ┣ 📜download_models.py
