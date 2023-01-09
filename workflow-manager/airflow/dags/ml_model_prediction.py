@@ -9,7 +9,7 @@ from airflow.providers.amazon.aws.sensors.emr import EmrServerlessJobSensor
 from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
 
 
-DAG_ID = "ML_Model_Training"
+DAG_ID = "ML_Model_Prediction"
 
 client = boto3.client("cloudformation")
 
@@ -100,11 +100,39 @@ def spark_job_driver(
 
 with DAG(
     dag_id=DAG_ID,
-    schedule=None,
+    schedule="0 */12 * * *",
     start_date=datetime(2021, 1, 1),
     tags=["EMR"],
     catchup=False,
 ) as dag:
+    run_crawl_task = EcsRunTaskOperator(
+        task_id="run_crawl_task",
+        cluster=crawler_stack_output_value("ClusterName"),
+        task_definition=crawler_stack_output_value("FtTaskDefinitionName"),
+        launch_type="FARGATE",
+        overrides={
+            "containerOverrides": [
+                {
+                    "name": "container-ft",
+                    "command": [
+                        "sh",
+                        "-c",
+                        "python3 ./crawler/scripts/crawl.py",
+                    ],
+                },
+            ],
+        },
+        network_configuration={
+            "awsvpcConfiguration": {
+                "subnets": crawler_stack_output_value("PublicSubnets").split(","),
+                "securityGroups": [
+                    crawler_stack_output_value("FtFargateServiceSecurityGroup")
+                ],
+                "assignPublicIp": "ENABLED",
+            },
+        },
+    )
+
     SPARK_CONFIGURATION_OVERRIDES = {
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {"logUri": emrs_stack_output_value("LogsURI")}
@@ -176,59 +204,37 @@ with DAG(
         job_run_id=start_knn_job.output,
     )
 
-    run_price_task = EcsRunTaskOperator(
-        task_id="run_price_task",
-        cluster=crawler_stack_output_value("ClusterName"),
-        task_definition=crawler_stack_output_value("PriceTaskDefinitionName"),
-        launch_type="FARGATE",
-        overrides={
-            "containerOverrides": [
-                {
-                    "name": "container-price",
-                    "command": [
-                        "sh",
-                        "-c",
-                        "python3 ./crawler/scripts/fetch_prices.py",
-                    ],
-                },
-            ],
-        },
-        network_configuration={
-            "awsvpcConfiguration": {
-                "subnets": crawler_stack_output_value("PublicSubnets").split(","),
-                "securityGroups": [
-                    crawler_stack_output_value("PriceFargateServiceSecurityGroup")
-                ],
-                "assignPublicIp": "ENABLED",
-            },
-        },
-    )
-
-    start_classification_job = EmrServerlessStartJobOperator(
-        task_id="start_classification_job",
+    start_prediction_job = EmrServerlessStartJobOperator(
+        task_id="start_prediction_job",
         application_id=application_id,
         execution_role_arn=emrs_stack_output_value("JobRoleARN"),
         job_driver=spark_job_driver(
-            "classification",
+            "prediction",
+            entry_point_args=[
+                "--from",
+                (date.today() - timedelta(days=7)).isoformat(),
+                "--to",
+                (date.today() + timedelta(days=1)).isoformat(),
+            ],
             executor_instances=2,
         ),
         configuration_overrides=SPARK_CONFIGURATION_OVERRIDES,
     )
 
-    wait_for_classification_job = EmrServerlessJobSensor(
-        task_id="wait_for_classification_job",
+    wait_for_prediction_job = EmrServerlessJobSensor(
+        task_id="wait_for_prediction_job",
         application_id=application_id,
-        job_run_id=start_classification_job.output,
+        job_run_id=start_prediction_job.output,
     )
 
     chain(
+        run_crawl_task,
         start_summarization_job,
         wait_for_summarization_job,
         start_ner_job,
         wait_for_ner_job,
         start_knn_job,
         wait_for_knn_job,
-        run_price_task,
-        start_classification_job,
-        wait_for_classification_job,
+        start_prediction_job,
+        wait_for_prediction_job,
     )

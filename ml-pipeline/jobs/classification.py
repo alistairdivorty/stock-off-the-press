@@ -36,9 +36,11 @@ def main():
 
     df = _extract(spark)
 
-    model = _transform(df)
+    emrfsModelPath = config.get("models", {}).get("emrfsModelPath", None)
 
-    _load(model, config.get("models", {}).get("emrfsModelPath", None))
+    model = _transform(df, emrfsModelPath)
+
+    _load(model, emrfsModelPath)
 
     spark.stop()
 
@@ -105,9 +107,13 @@ def _extract(spark: SparkSession) -> DataFrame:
     )
 
 
-def _transform(df: DataFrame) -> PipelineModel:
+def _transform(df: DataFrame, emrfsModelPath: str | None = None) -> PipelineModel:
     data = PipelineModel(
-        stages=[Vectorizer(inputCol="text", outputCol="embeddings")]
+        stages=[
+            Vectorizer(
+                inputCol="text", outputCol="embeddings", emrfsModelPath=emrfsModelPath
+            ),
+        ]
     ).transform(
         df.withColumn(
             "text",

@@ -1,4 +1,5 @@
 import json, os
+from datetime import datetime, date, time
 from argparse import ArgumentParser, BooleanOptionalAction
 from pyspark.ml import Pipeline, PipelineModel
 from pyspark.ml.feature import RegexTokenizer, NGram, HashingTF, IDF
@@ -9,16 +10,18 @@ from pyspark.sql.types import StructType, StructField, StringType
 from pyspark_hnsw.knn import HnswSimilarity
 from inference.services.spark import start_spark
 
-parser = ArgumentParser()
-parser.add_argument("--similarity-threshold", type=float, default=0.4)
-parser.add_argument("--num-partitions", type=int, default=2)
-parser.add_argument(
+arg_parser = ArgumentParser()
+arg_parser.add_argument("--similarity-threshold", type=float, default=0.4)
+arg_parser.add_argument("--num-partitions", type=int, default=2)
+arg_parser.add_argument(
     "--save-model", type=bool, action=BooleanOptionalAction, default=False
 )
+arg_parser.add_argument("--from", dest="from_", type=date.fromisoformat)
+arg_parser.add_argument("--to", type=date.fromisoformat)
 
 
 def main():
-    args = parser.parse_args()
+    args = arg_parser.parse_args()
 
     spark, logger, config = start_spark()
 
@@ -41,6 +44,8 @@ def main():
 
 
 def _extract(spark: SparkSession) -> tuple[DataFrame, DataFrame]:
+    args = arg_parser.parse_args()
+
     symbols = (
         spark.read.schema(
             StructType(
@@ -101,6 +106,20 @@ def _extract(spark: SparkSession) -> tuple[DataFrame, DataFrame]:
                                 "$ne": "",
                             },
                             "symbol": {"$exists": False},
+                            "date_published": {
+                                "$gt": {
+                                    "$date": datetime.combine(
+                                        args.from_, time.min
+                                    ).isoformat()
+                                    + "Z"
+                                },
+                                "$lt": {
+                                    "$date": datetime.combine(
+                                        args.to, time.min
+                                    ).isoformat()
+                                    + "Z"
+                                },
+                            },
                         }
                     },
                     {

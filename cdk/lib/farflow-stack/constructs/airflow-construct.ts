@@ -32,7 +32,7 @@ export class AirflowConstruct extends Construct {
         const dbSecret = sm.Secret.fromSecretNameV2(
             this,
             'DatabaseSecret',
-            'rds/postgres/master'
+            'docdb/master'
         );
 
         const ENV_VARS = {
@@ -50,11 +50,13 @@ export class AirflowConstruct extends Construct {
             SUBNETS: props.privateSubnets
                 .map((subnet) => subnet.subnetId)
                 .join(','),
-            DB_DATABASE_NAME: 'farflow',
-            DB_MASTER_USERNAME: dbSecret
+            DOCDB_DATABASE_NAME: dbSecret
+                .secretValueFromJson('dbName')
+                .unsafeUnwrap(),
+            DOCDB_MASTER_USERNAME: dbSecret
                 .secretValueFromJson('username')
                 .unsafeUnwrap(),
-            DB_MASTER_USER_PASSWORD: dbSecret
+            DOCDB_MASTER_USER_PASSWORD: dbSecret
                 .secretValueFromJson('password')
                 .unsafeUnwrap()
         };
