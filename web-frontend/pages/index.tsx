@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import Hero from '@/components/Hero';
+import Articles from '@/components/Articles';
 import useArticlesContext from '@/hooks/useArticlesContext';
 
 export default function Home() {
-    const { articles } = useArticlesContext() || {};
-    
+    const { articles } = useArticlesContext() ?? {};
+
     return (
         <>
             <Head>
@@ -21,8 +22,10 @@ export default function Home() {
             </Head>
             <main>
                 <Hero />
-                <div>
-                    {JSON.stringify(articles)}
+                <div className="w-full flex justify-center bg-zinc-800">
+                    <div className="m-6">
+                        <Articles articles={articles ?? []} />
+                    </div>
                 </div>
             </main>
         </>
