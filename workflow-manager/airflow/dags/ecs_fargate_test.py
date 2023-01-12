@@ -36,9 +36,9 @@ with DAG(
                 "assignPublicIp": "DISABLED",
             }
         },
-        awslogs_group="/ecs/hello",
+        awslogs_group="FarFlowDagTaskLogs",
         awslogs_region="eu-west-1",
-        awslogs_stream_prefix="ecs/hello-container",
+        awslogs_stream_prefix="FarFlowDagTaskLogging/hello",
         # You must set `reattach=True` in order to get ecs_task_arn if you plan to use a Sensor.
         reattach=True,
     )
