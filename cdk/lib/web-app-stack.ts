@@ -178,7 +178,15 @@ export class WebAppStack extends Stack {
 
         const nextjs = new Nextjs(this, 'WebFrontend', {
             nextjsPath: '../web-frontend',
-            projectRoot: '..'
+            projectRoot: '..',
+            defaults: {
+                distribution: {
+                    customDomain: {
+                        domainName: 'stockoffthepress.com',
+                        hostedZone: 'stockoffthepress.com'
+                    }
+                }
+            }
         });
 
         new CfnOutput(this, 'WebFrontendURL', {
