@@ -2,5 +2,6 @@ venv
 bundle.zip
 .env
 .env.*
+env.json
 **/__pycache__/
 **/.DS_STORE

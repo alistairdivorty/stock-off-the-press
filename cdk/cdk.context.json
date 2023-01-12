@@ -89,5 +89,9 @@
         ]
       }
     ]
+  },
+  "hosted-zone:account=424943402251:domainName=stockoffthepress.com:region=eu-west-1": {
+    "Id": "/hostedzone/Z07300112A2FD1XN9HPF0",
+    "Name": "stockoffthepress.com."
   }
 }

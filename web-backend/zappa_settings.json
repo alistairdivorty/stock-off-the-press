@@ -1,11 +1,11 @@
 {
-    "production": {
-        "aws_region": "eu-west-1",
-        "django_settings": "core.settings",
-        "profile_name": "default",
-        "project_name": "web-backend",
-        "runtime": "python3.9",
-        "s3_bucket": "zappa-axm3891lp",
-        "remote_env": "s3://zappa-axm3891lp/backend/env.json"
-    }
+  "production": {
+    "aws_region": "eu-west-1",
+    "django_settings": "core.settings",
+    "profile_name": "default",
+    "project_name": "web-backend",
+    "runtime": "python3.9",
+    "s3_bucket": "zappa-axm3891lp",
+    "remote_env": "s3://zappa-axm3891lp/backend/env.json"
+  }
 }
