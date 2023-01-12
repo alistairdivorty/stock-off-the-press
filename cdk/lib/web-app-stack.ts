@@ -15,7 +15,9 @@ import {
     aws_iam as iam,
     aws_apigateway as apigw,
     aws_route53 as route53,
-    aws_certificatemanager as acm
+    aws_certificatemanager as acm,
+    aws_events as events,
+    aws_events_targets as targets
 } from 'aws-cdk-lib';
 import { ApiGateway } from 'aws-cdk-lib/aws-route53-targets';
 import { PostgresCreateDatabase } from './custom-resources/postgres-create-database/postgres-create-database';
@@ -123,7 +125,9 @@ export class WebAppStack extends Stack {
             timeout: Duration.seconds(30),
             vpc: vpc,
             vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-            allowPublicSubnet: true
+            allowPublicSubnet: true,
+            memorySize: 1024,
+            tracing: lambda.Tracing.ACTIVE
         });
 
         lambdaFunction.node.addDependency(envVarsBucketDeployment);
@@ -138,6 +142,12 @@ export class WebAppStack extends Stack {
                 ]
             })
         );
+
+        const eventRule = new events.Rule(this, 'FunctionWarming', {
+            schedule: events.Schedule.rate(Duration.minutes(5))
+        });
+
+        eventRule.addTarget(new targets.LambdaFunction(lambdaFunction));
 
         const api = new apigw.LambdaRestApi(this, 'RestAPI', {
             handler: lambdaFunction
