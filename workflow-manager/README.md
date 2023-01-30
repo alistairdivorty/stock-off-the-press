@@ -44,7 +44,7 @@ A [DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html
 
 ### 4. Deployment
 
-To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy FarFlowStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app outputs the address of the Network Load Balancer that exposes the Airflow Webserver.
+To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy FarFlowStack`. See the [AWS CDK app](../README.md#6-aws-cdk-app) section of the main README for details of how to set up the AWS CDK Toolkit. The AWS CDK app outputs the address of the Network Load Balancer that exposes the Airflow Webserver.
 
 ### 5. Run Workflow in Production Environment
 

@@ -114,7 +114,7 @@ mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostn
 
 ### 6. Deployment
 
-To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy CrawlerStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit.
+To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy CrawlerStack`. See the [AWS CDK app](../README.md#6-aws-cdk-app) section of the main README for details of how to set up the AWS CDK Toolkit.
 
 ### 7. Run Crawl in Production Environment
 
