@@ -5,7 +5,9 @@ This monorepo contains an application for crawling sources of market news, a mac
 - [Crawler](#1-crawler)
 - [ML Pipeline](#2-ml-pipeline)
 - [Workflow Manager](#3-workflow-manager)
-- [AWS CDK App](#5-aws-cdk-app)
+- [Web App Backend](#4-web-app-backend)
+- [Web App Front](#5-web-app-frontend)
+- [AWS CDK App](#6-aws-cdk-app)
 
 ## 1. Crawler
 
@@ -58,7 +60,9 @@ To create a file for storing environment variables, run `cp .env.example .env` f
  ┃ ┃ ┣ 📜crawl.py
  ┃ ┃ ┗ 📜encrypt_data.py
  ┃ ┣ 📂spiders
- ┃ ┃ ┗ 📜ft.py
+ ┃ ┃ ┣ 📜exchange.py
+ ┃ ┃ ┣ 📜ft.py
+ ┃ ┃ ┗ 📜price.py
  ┃ ┣ 📜form_payloads.py
  ┃ ┣ 📜items.py
  ┃ ┣ 📜log_formatter.py
@@ -89,7 +93,7 @@ To create a file for storing environment variables, run `cp .env.example .env` f
 
 ### 1.4. Lambda Functions
 
-The session cookies used by spiders for authenticating user accounts are obtained by means of [Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-concepts.html#gettingstarted-concepts-function) that use the [Playwright](https://playwright.dev/) browser automation library to orchestrate instances of the Chromium browser running in headless mode. The JavaScript code that runs in [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) using the Node runtime is contained in the `lambdas` directory. The subdirectory for each Lambda function contains a TypeScript file defining the function handler method, a `Dockerfile` for building the [deployment container image](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html), and a shell script that is executed when the Docker container is started. To transcompile the TypeScript code into Lambda-compatible JavaScript, run `npm run build` from the `lambdas` directory. The [AWS CDK app](#5-aws-cdk-app) takes care of building and uploading the deployment container image. The constructs representing the Lambda functions are defined as part of the `CrawlerStack` stack.
+The session cookies used by spiders for authenticating user accounts are obtained by means of [Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-concepts.html#gettingstarted-concepts-function) that use the [Playwright](https://playwright.dev/) browser automation library to orchestrate instances of the Chromium browser running in headless mode. The JavaScript code that runs in [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) using the Node runtime is contained in the `lambdas` directory. The subdirectory for each Lambda function contains a TypeScript file defining the function handler method, a `Dockerfile` for building the [deployment container image](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html), and a shell script that is executed when the Docker container is started. To transcompile the TypeScript code into Lambda-compatible JavaScript, run `npm run build` from the `lambdas` directory. The [AWS CDK app](#6-aws-cdk-app) takes care of building and uploading the deployment container image. The constructs representing the Lambda functions are defined as part of the `CrawlerStack` stack.
 
 ### 1.5. Run Crawl in Local Development Environment
 
@@ -121,11 +125,11 @@ mongodb://<username>:<password>@localhost:27017/stock-press?tlsAllowInvalidHostn
 
 ### 1.6. Deployment
 
-To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy CrawlerStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit.
+To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy CrawlerStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit.
 
 ### 1.7. Run Crawl in Production Environment
 
-For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `<cluster-name>`, `<task-definition-name>`, `<vpc-public-subnet-id>` and `<service-security-group-id>` with the values outputted by the [AWS CDK app](#5-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider.
+For production crawls, the crawler is run as an [Amazon Elastic Container Service (ECS)](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) task using the [AWS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html) serverless container orchestrator. To run an ECS task using the [AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html), run the following command, substituting `<cluster-name>`, `<task-definition-name>`, `<vpc-public-subnet-id>` and `<service-security-group-id>` with the values outputted by the [AWS CDK app](#6-aws-cdk-app) after deployment. The example below shows how to override the default command for a container specified in the Docker image with a command that specifies a year within which an article must have been published for it to be processed by the spider.
 
 ```shell
 aws ecs run-task \
@@ -331,11 +335,11 @@ The project also includes a Dockerfile with instructions for fetching model file
 
 #### 2.7.2 Deploy CloudFormation Stack
 
-To deploy the crawler using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK app outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role, S3 URIs for the `jobs`, `config`, `artifacts`, `models` and `logs` folders, and the S3 URI for the ZIP archive containing a custom Java KeyStore.
+To deploy the application using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy EMRServerlessStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app takes care of uploading the deployment artifacts and assets to the project's dedicated S3 bucket. The app also creates and uploads a JSON configuration file named `models.json` that specifies the S3 URI for the `models` folder. For production job runs, this file needs to be submitted to the Spark cluster by passing the URI as an argument to the `--files` option. The AWS CDK app outputs the ID of the EMR Serverless application created by the CloudFormation stack, along with the [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the [IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) execution role, S3 URIs for the `jobs`, `config`, `artifacts`, `models` and `logs` folders, and the S3 URI for the ZIP archive containing a custom Java KeyStore.
 
 ### 2.8. Run Job in Production Environment
 
-The following is an example of how to submit a job to the [EMR Serverless](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/emr-serverless.html) application deployed by the [AWS CDK app](#5-aws-cdk-app) using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html). The placeholder values should be replaced with the values outputted by the CDK app after deployment.
+The following is an example of how to submit a job to the [EMR Serverless](https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/emr-serverless.html) application deployed by the [AWS CDK app](#6-aws-cdk-app) using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html). The placeholder values should be replaced with the values outputted by the CDK app after deployment.
 
 ```shell
 aws emr-serverless start-job-run \
@@ -405,25 +409,97 @@ A [DAG](https://airflow.apache.org/docs/apache-airflow/stable/concepts/dags.html
 
 ### 3.4. Deployment
 
-To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy FarFlowStack`. See the [AWS CDK app](#5-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app outputs the address of the Network Load Balancer that exposes the Airflow Webserver.
+To deploy the Airflow application to Amazon ECS using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy FarFlowStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The AWS CDK app outputs the address of the Network Load Balancer that exposes the Airflow Webserver.
 
 ### 3.5. Run Workflow in Production Environment
 
 To trigger a DAG manually, navigate to the web address outputted by the AWS CDK app and log in to the Airflow UI as "admin" using the password stored in [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) under the name "airflow/admin". Select the **Trigger DAG** option from the dropdown activated by clicking the play button in the **Actions** column for the DAG you want to run.
 
-## 5. AWS CDK App
+## 4. Web App Backend
+
+- [What It Does](#41-what-it-does)
+- [Local Setup](#42-local-setup)
+  - [Prerequisites](#421-prerequisites)
+  - [Set Up Environment](#422-set-up-environment)
+- [Directory Structure](#43-directory-structure)
+- [Deployment](#44-deployment)
+
+### 4.1. What It Does
+
+This is a web application backend for serving model inferences architected using the [Django](https://www.djangoproject.com/) framework.
+
+### 4.2. Local Setup
+
+#### 4.2.1. Prerequisites
+
+- [Conda package and environment manager](https://docs.conda.io/projects/conda/en/latest/)
+
+#### 4.2.2. Set Up Environment
+
+Start by installing the conda package and environment manager. The [Miniconda](https://docs.conda.io/en/latest/miniconda.html#) installer can be used to install a small, bootstrap version of Anaconda that includes only conda, Python, the packages they depend on, and a small number of other useful packages, including pip.
+
+To create a fresh conda environment, run `conda create -n <env-name> python=3.10`, substituting `<env-name>` with your desired environment name. Once the environment has been created, activate the environment by running `conda activate <env-name>`.
+
+Install the Python dependencies for the backend by running `pip install -r requirements.txt` from the `web-backend` directory.
+
+Set the necessary environment variables by modifying the command below as required depending on the location of your Miniconda installation and environment name.
+
+```shell
+conda env config vars set \
+PYTHONPATH=<path/to/project/dir>/web-backend:$HOME/opt/miniconda3/envs/<env-name>/lib/python3.10/site-packages
+```
+
+Reactivate the environment by running `conda activate <env-name>`.
+
+To create a file for storing environment variables, run `cp .env.example .env` from the `web-backend` directory.
+
+Run `python manage.py runserver` from the `web-backend` directory to start the local Django development server. By default the server is started on port 8000.
+
+### 4.3. Directory Structure
+
+```
+📦web-backend
+ ┣ 📂core
+ ┃ ┣ 📂templates
+ ┃ ┃ ┗ 📜robots.txt
+ ┃ ┣ 📜asgi.py
+ ┃ ┣ 📜settings.py
+ ┃ ┣ 📜urls.py
+ ┃ ┣ 📜utils.py
+ ┃ ┗ 📜wsgi.py
+ ┣ 📂stockpress
+ ┃ ┃ ┣ 📂views
+ ┃ ┃ ┣ 📜articles.py
+ ┃ ┃ ┗ 📜home.py
+ ┣ 📜admin.py
+ ┣ 📜apps.py
+ ┣ 📜models.py
+ ┣ 📜tests.py
+ ┗ 📜urls.py
+ ┣ 📜.env.example
+ ┣ 📜.gitignore
+ ┣ 📜Dockerfile
+ ┣ 📜manage.py
+ ┣ 📜requirements.txt
+ ┗ 📜zappa_settings.json
+```
+
+### 4.4. Deployment
+
+To deploy the application using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy WebAppStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The CDK app takes care of bundling the project files using the [Zappa](https://github.com/zappa/Zappa) build tool for deployment to [AWS Lambda](https://aws.amazon.com/lambda/).
+
+## 5. Web App Frontend
 
 - [What It Does](#51-what-it-does)
 - [Local Setup](#52-local-setup)
   - [Prerequisites](#521-prerequisites)
   - [Set Up Environment](#522-set-up-environment)
 - [Directory Structure](#53-directory-structure)
-- [Testing](#54-testing)
-- [Deployment](#55-deployment)
+- [Deployment](#54-deployment)
 
 ### 5.1. What It Does
 
-The [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/v2/guide/home.html) is a framework for defining cloud infrastructure in code and provisioning it through [AWS CloudFormation](https://aws.amazon.com/cloudformation/). This is an AWS CDK application that defines the cloud infrastructure required by the services contained in this repository.
+This is a web application frontend for allowing users to view model inferences architected using the [Next.js](https://nextjs.org/) framework.
 
 ### 5.2. Local Setup
 
@@ -433,11 +509,78 @@ The [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/v2/guide/h
 
 #### 5.2.2. Set Up Environment
 
+Install the Node dependencies by running `npm install` from the `web-frontend` directory.
+
+Run `npm run dev` to start the local Next.js development server. By default the server is started on port 3000. Navigate to `http://localhost:3000` to view the site in a web browser.
+
+### 5.3. Directory Structure
+
+```
+📦web-frontend
+ ┣ 📂components
+ ┃ ┣📜Article.tsx
+ ┃ ┗📜...
+ ┣ 📂context
+ ┃ ┗📜articlesContext.tsx
+ ┣ 📂hooks
+ ┃ ┣📜useArticlesContext.tsx
+ ┃ ┗📜useIntersectionObserver.tsx
+ ┣ 📂pages
+ ┃ ┣ 📂api
+ ┃ ┃ ┗ 📜hello.ts
+ ┃ ┣ 📜_app.tsx
+ ┃ ┣ 📜_document.tsx
+ ┃ ┗ 📜index.tsx
+ ┣ 📂public
+ ┃ ┣ 📜favicon.ico
+ ┃ ┗ 📜robots.txt
+ ┣ 📂styles
+ ┃ ┗ 📜globals.css
+ ┣ 📂types
+ ┃ ┗ 📜index.ts
+ ┣ 📜.eslintrc.json
+ ┣ 📜.gitignore
+ ┣ 📜.prettierrc.json
+ ┣ 📜next-env.d.ts
+ ┣ 📜next.config.js
+ ┣ 📜package-lock.json
+ ┣ 📜package.json
+ ┣ 📜postcss.config.js
+ ┣ 📜tailwind.config.js
+ ┗ 📜tsconfig.json
+```
+
+### 5.4. Deployment
+
+To deploy the application using the [AWS CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html), change the current working directory to `cdk` and run `cdk deploy WebAppStack`. See the [AWS CDK app](#6-aws-cdk-app) section for details of how to set up the AWS CDK Toolkit. The CDK app takes care of bundling the project files using the [standalone output](https://nextjs.org/docs/advanced-features/output-file-tracing) build mode for deployment to [AWS Lambda](https://aws.amazon.com/lambda/).
+
+## 6. AWS CDK App
+
+- [What It Does](#61-what-it-does)
+- [Local Setup](#62-local-setup)
+  - [Prerequisites](#621-prerequisites)
+  - [Set Up Environment](#622-set-up-environment)
+- [Directory Structure](#63-directory-structure)
+- [Testing](#64-testing)
+- [Deployment](#65-deployment)
+
+### 6.1. What It Does
+
+The [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/v2/guide/home.html) is a framework for defining cloud infrastructure in code and provisioning it through [AWS CloudFormation](https://aws.amazon.com/cloudformation/). This is an AWS CDK application that defines the cloud infrastructure required by the services contained in this repository.
+
+### 6.2. Local Setup
+
+#### 6.2.1. Prerequisites
+
+- [Node.js JavaScript runtime environment](https://nodejs.org/en/download/)
+
+#### 6.2.2. Set Up Environment
+
 To install the [CDK Toolkit](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) (a CLI tool for interacting with a CDK app) using the [Node Package Manager](https://www.npmjs.com/), run the command `npm install -g aws-cdk`. The CDK Toolkit needs access to AWS credentials. Access to your credentials can be configured using the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) by running `aws configure` and following the prompts.
 
 Install the Node dependencies by running `npm install` from the `cdk` directory.
 
-### 5.3 Directory Structure
+### 6.3. Directory Structure
 
 ```
 📦cdk
@@ -488,10 +631,10 @@ Install the Node dependencies by running `npm install` from the `cdk` directory.
  ┗ 📜tsconfig.json
 ```
 
-### 5.4. Testing
+### 6.4. Testing
 
 This project uses the [Jest](https://jestjs.io/) software testing framework. Run `npm run test` to execute all tests.
 
-### 5.5. Deployment
+### 6.5. Deployment
 
 To deploy all the stacks defined by the application, change the current working directory to `cdk` and run `cdk deploy --all`.
