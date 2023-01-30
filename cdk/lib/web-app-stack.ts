@@ -143,11 +143,15 @@ export class WebAppStack extends Stack {
             })
         );
 
-        const eventRule = new events.Rule(this, 'FunctionWarming', {
-            schedule: events.Schedule.rate(Duration.minutes(5))
-        });
+        const backendEventRule = new events.Rule(
+            this,
+            'BackendFunctionWarming',
+            {
+                schedule: events.Schedule.rate(Duration.minutes(5))
+            }
+        );
 
-        eventRule.addTarget(new targets.LambdaFunction(lambdaFunction));
+        backendEventRule.addTarget(new targets.LambdaFunction(lambdaFunction));
 
         const api = new apigw.LambdaRestApi(this, 'RestAPI', {
             handler: lambdaFunction
@@ -188,6 +192,18 @@ export class WebAppStack extends Stack {
                 }
             }
         });
+
+        const frontendEventRule = new events.Rule(
+            this,
+            'FrontendFunctionWarming',
+            {
+                schedule: events.Schedule.rate(Duration.minutes(5))
+            }
+        );
+
+        frontendEventRule.addTarget(
+            new targets.LambdaFunction(nextjs.serverFunction.lambdaFunction)
+        );
 
         new CfnOutput(this, 'WebFrontendURL', {
             value: nextjs.url
