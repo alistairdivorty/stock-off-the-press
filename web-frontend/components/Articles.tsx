@@ -30,7 +30,7 @@ const Articles = ({ articles }: Props) => {
 
     const articleElements = articles.map((article) => (
         <li key={article._id.$oid} className="article opacity-0">
-            <div>
+            <div className="relative">
                 <Article article={article} />
             </div>
         </li>

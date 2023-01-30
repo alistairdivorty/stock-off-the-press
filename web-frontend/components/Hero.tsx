@@ -1,7 +1,7 @@
 import Candlestick from '@/components/Candlestick';
 
 const Hero = () => (
-    <div className="h-screen bg-black flex justify-end w-full text-white p-10 font-montserrat">
+    <div className="min-h-screen bg-black flex justify-end w-full text-white py-40 px-10">
         <div className="relative max-w-7xl sm:flex-1 sm:mr-10 text-white">
             <div className="absolute inset-y-1/4 transform -translate-y-20 z-10 max-w-lg">
                 <h1
